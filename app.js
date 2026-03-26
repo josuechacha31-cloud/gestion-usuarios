@@ -1,3 +1,7 @@
+const SB_URL = "https://vmorgejoxarkypgeavin.supabase.co"; // Tu URL de la captura
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtb3JnZWpveGFya3lwZ2VhdmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDAxODAsImV4cCI6MjA5MDExNjE4MH0.Snj2a7UVGvYhXfE8_1Rx-X91fupnPq-4A9fVMAj38jQ"; // La llave que empieza con ey...
+const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
 async function login() {
     const email = document.getElementById('email-input').value;
     const pass = document.getElementById('password-input').value; // Nuevo input
