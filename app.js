@@ -37,16 +37,6 @@ async function login() {
     }
 }
 
-window.onload = () => {
-    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-    if (!user || !user.roles || user.roles.nombre_rol !== 'Administrador') {
-        window.location.href = 'index.html';
-    } else {
-        document.getElementById('user-name').innerText = user.nombre;
-        listarUsuarios();
-    }
-};
-
 async function crearPersona() {
     const persona = {
         nombre: document.getElementById('new-name').value,
