@@ -4,9 +4,9 @@ const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
 async function login() {
     const email = document.getElementById('email-input').value;
-    const pass = document.getElementById('password-input').value; // Nuevo input
+    const pass = document.getElementById('password-input').value;
 
-    const {data, error} = await supabaseClient
+    const {data, error} = await window.supabaseClient
         .from('personas')
         .select('*, roles(nombre_rol)')
         .eq('email', email)
@@ -16,15 +16,36 @@ async function login() {
     if (data) {
         sessionStorage.setItem('usuario_logueado', JSON.stringify(data));
 
-        // Redirección dinámica según nombre_rol
-        const rol = data.roles.nombre_rol;
-        if (rol === 'Administrador') window.location.href = 'panel_administrador.html';
-        else if (rol === 'Jefe') window.location.href = 'panel_jefe.html';
-        else window.location.href = 'panel_empleado.html';
+        Swal.fire({
+            icon: 'success',
+            title: `¡Bienvenido, ${data.nombre}!`,
+            text: 'Accediendo al sistema...',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            const rol = data.roles.nombre_rol;
+            if (rol === 'Administrador') window.location.href = 'panel_administrador.html';
+            else if (rol === 'Jefe') window.location.href = 'panel_jefe.html';
+            else window.location.href = 'panel_empleado.html';
+        });
     } else {
-        alert("Credenciales incorrectas");
+        Swal.fire({
+            icon: 'error',
+            title: 'Acceso Denegado',
+            text: 'Correo o contraseña incorrectos.'
+        });
     }
 }
+
+window.onload = () => {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    if (!user || !user.roles || user.roles.nombre_rol !== 'Administrador') {
+        window.location.href = 'index.html';
+    } else {
+        document.getElementById('user-name').innerText = user.nombre;
+        listarUsuarios();
+    }
+};
 
 async function crearPersona() {
     const persona = {

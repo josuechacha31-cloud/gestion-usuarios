@@ -5,12 +5,14 @@
     <title>Panel Administrativo</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 <div class="container dash-container">
     <div class="card admin-header">
         <h1>Panel Administrativo</h1>
         <p>Bienvenido, <span id="user-name"></span></p>
+
 
         <div class="admin-form">
             <h3>Registrar Nuevo Empleado</h3>
@@ -46,11 +48,14 @@
     // Al cargar esta página, verificamos si hay sesión
     window.onload = () => {
         const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-        if (!user || user.rol !== 'Administrador') {
-            window.location.href = 'index.html'; // Redirigir si no es admin
+
+        // Cambiamos user.rol por la ruta correcta: user.roles.nombre_rol
+        if (!user || !user.roles || user.roles.nombre_rol !== 'Administrador') {
+            window.location.href = 'index.html';
+        } else {
+            document.getElementById('user-name').innerText = user.nombre;
+            listarUsuarios(); // Asegúrate de que esta función exista en app.js
         }
-        document.getElementById('user-name').innerText = user.nombre;
-        listarUsuarios();
     };
 </script>
 </body>
