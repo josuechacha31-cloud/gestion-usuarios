@@ -22,6 +22,32 @@ async function login() {
     }
 }
 
+async function crearPersona() {
+    const persona = {
+        nombre: document.getElementById('new-name').value,
+        apellido: document.getElementById('new-lastname').value,
+        cedula: document.getElementById('new-cedula').value,
+        email: document.getElementById('new-email').value,
+        password: document.getElementById('new-password').value,
+        celular: document.getElementById('new-phone').value,
+        cargo: document.getElementById('new-cargo').value,
+        remuneracion: parseFloat(document.getElementById('new-salary').value),
+        rol_id: parseInt(document.getElementById('new-role').value)
+    };
+
+    const {data, error} = await supabaseClient
+        .from('personas')
+        .insert([persona]);
+
+    if (error) {
+        alert("Error: " + error.message);
+    } else {
+        alert("¡Empleado registrado exitosamente!");
+        // Limpiar formulario y recargar tabla
+        location.reload();
+    }
+}
+
 async function solicitarPermiso() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const desde = document.getElementById('hora_desde').value;
@@ -78,9 +104,42 @@ async function gestionarPermiso(idPermiso, nuevoEstado) {
         alert("Estado actualizado: " + nuevoEstado);
         location.reload(); // Recargar para limpiar la lista
     }
-}   
+}
 
 function logout() {
     sessionStorage.clear();
     window.location.href = 'index.html';
+}
+
+async function registrarMarcacion(tipo) {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    const {error} = await supabaseClient
+        .from('asistencias')
+        .insert([{empleado_id: user.id, tipo: tipo}]);
+
+    if (!error) {
+        alert("Marcación de " + tipo + " registrada");
+        cargarMisMarcaciones(user.id);
+    }
+}
+
+async function cargarMisMarcaciones(empleadoId) {
+    const {data} = await supabaseClient
+        .from('asistencias')
+        .select('*')
+        .eq('empleado_id', empleadoId)
+        .order('fecha_hora', {ascending: false});
+
+    const tabla = document.getElementById('tabla-asistencias');
+    tabla.innerHTML = '';
+    data.forEach(m => {
+        const dt = new Date(m.fecha_hora);
+        tabla.innerHTML += `
+            <tr>
+                <td>${dt.toLocaleDateString()}</td>
+                <td>${dt.toLocaleTimeString()}</td>
+                <td>${m.tipo}</td>
+            </tr>
+        `;
+    });
 }

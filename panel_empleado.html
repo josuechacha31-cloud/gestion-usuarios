@@ -1,15 +1,58 @@
-<div class="card user-header">
-    <h1>Mi Perfil</h1>
-    <div id="datos-personales">
-        <input type="text" id="edit-celular" placeholder="Celular">
-        <input type="text" id="edit-direccion" placeholder="Dirección">
-        <button onclick="actualizarDatos()">Actualizar Mis Datos</button>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Perfil | Empleado</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="container dash-container">
+    <div class="card user-header">
+        <h1>Panel de Empleado</h1>
+        <p>Bienvenido, <span id="emp-name"></span></p>
+
+        <div class="admin-form">
+            <h3>Mis Datos Personales</h3>
+            <input type="text" id="edit-celular" placeholder="Celular">
+            <input type="text" id="edit-direccion" placeholder="Dirección">
+            <button onclick="actualizarDatos()">Actualizar Datos</button>
+        </div>
+
+        <hr>
+        <h3>Control de Asistencia</h3>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="registrarMarcacion('Entrada')" style="background: #10b981;">Entrada</button>
+            <button onclick="registrarMarcacion('Salida')" style="background: #f59e0b;">Salida</button>
+        </div>
+
+        <div class="admin-table-container">
+            <h3>Mis Marcaciones del Mes</h3>
+            <table>
+                <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Tipo</th>
+                </tr>
+                </thead>
+                <tbody id="tabla-asistencias"></tbody>
+            </table>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
     </div>
-
-    <hr>
-    <h2>Asistencia Hoy</h2>
-    <button onclick="registrarMarcacion('Entrada')">Marcar Entrada</button>
-    <button onclick="registrarMarcacion('Salida')" style="background: orange;">Marcar Salida</button>
-
-    <div id="mis-marcaciones"></div>
 </div>
+<script src="app.js"></script>
+<script>
+    window.onload = () => {
+        const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+        if (!user) window.location.href = 'index.html';
+        document.getElementById('emp-name').innerText = user.nombre;
+        document.getElementById('edit-celular').value = user.celular || '';
+        document.getElementById('edit-direccion').value = user.direccion || '';
+        cargarMisMarcaciones(user.id);
+    };
+</script>
+</body>
+</html>

@@ -7,37 +7,51 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="container dash-container">
-        <div class="card admin-header">
-            <h1>Panel Administrativo</h1>
-            <p>Bienvenido, <span id="user-name"></span></p>
+<div class="container dash-container">
+    <div class="card admin-header">
+        <h1>Panel Administrativo</h1>
+        <p>Bienvenido, <span id="user-name"></span></p>
 
-            <div class="admin-form">
-                <h3>Registrar Nuevo Usuario</h3>
-                <input type="text" id="new-name" placeholder="Nombre">
-                <input type="email" id="new-email" placeholder="Correo">
-                <select id="new-role"><option value="1">Admin</option><option value="2">Empleado</option></select>
-                <button onclick="crearPersona()">Guardar</button>
+        <div class="admin-form">
+            <h3>Registrar Nuevo Empleado</h3>
+            <div class="grid-form">
+                <input type="text" id="new-name" placeholder="Nombres">
+                <input type="text" id="new-lastname" placeholder="Apellidos">
+                <input type="text" id="new-cedula" placeholder="Cédula (ID)">
+                <input type="email" id="new-email" placeholder="Correo electrónico">
+                <input type="password" id="new-password" placeholder="Contraseña temporal">
+                <input type="text" id="new-phone" placeholder="Celular">
+                <input type="text" id="new-cargo" placeholder="Cargo">
+                <input type="number" id="new-salary" placeholder="Remuneración ($)">
+
+                <label>Rol del Usuario:</label>
+                <select id="new-role">
+                    <option value="1">Administrador</option>
+                    <option value="2" selected>Empleado</option>
+                    <option value="3">Jefe</option>
+                </select>
             </div>
-
-            <div class="admin-table-container">
-                <table id="tabla-usuarios">...</table>
-            </div>
-
-            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+            <button onclick="crearPersona()">Guardar Empleado</button>
         </div>
+
+        <div class="admin-table-container">
+            <table id="tabla-usuarios">...</table>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
     </div>
-    <script src="app.js"></script>
-    <script>
-        // Al cargar esta página, verificamos si hay sesión
-        window.onload = () => {
-            const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-            if (!user || user.rol !== 'Administrador') {
-                window.location.href = 'index.html'; // Redirigir si no es admin
-            }
-            document.getElementById('user-name').innerText = user.nombre;
-            listarUsuarios();
-        };
-    </script>
+</div>
+<script src="app.js"></script>
+<script>
+    // Al cargar esta página, verificamos si hay sesión
+    window.onload = () => {
+        const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+        if (!user || user.rol !== 'Administrador') {
+            window.location.href = 'index.html'; // Redirigir si no es admin
+        }
+        document.getElementById('user-name').innerText = user.nombre;
+        listarUsuarios();
+    };
+</script>
 </body>
 </html>
