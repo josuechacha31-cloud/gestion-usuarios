@@ -1,10 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<div class="card user-header">
+    <h1>Mi Perfil</h1>
+    <div id="datos-personales">
+        <input type="text" id="edit-celular" placeholder="Celular">
+        <input type="text" id="edit-direccion" placeholder="Dirección">
+        <button onclick="actualizarDatos()">Actualizar Mis Datos</button>
+    </div>
 
-</body>
-</html>
+    <hr>
+    <h2>Asistencia Hoy</h2>
+    <button onclick="registrarMarcacion('Entrada')">Marcar Entrada</button>
+    <button onclick="registrarMarcacion('Salida')" style="background: orange;">Marcar Salida</button>
+
+    <div id="mis-marcaciones"></div>
+</div>
