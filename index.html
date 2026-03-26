@@ -2,61 +2,18 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Usuarios | Supabase</title>
+    <title>Login | Sistema Gestión</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
     <div class="container">
-        <div id="login-box" class="card">
+        <div class="card">
             <h2>Iniciar Sesión</h2>
-            <p>Ingresa tu correo institucional</p>
             <input type="email" id="email-input" placeholder="ejemplo@correo.com">
-            <button onclick="login()">Acceder al Sistema</button>
-        </div>
-
-        <div id="dash-admin" class="card dash-container hidden admin-header">
-            <h1>Panel Administrativo</h1>
-            <p>Bienvenido, <strong>Carlos</strong>. Tienes permisos de gestión global.</p>
-            
-            <div class="admin-form">
-                <h3>Registrar Nuevo Usuario</h3>
-                <input type="text" id="new-name" placeholder="Nombre completo">
-                <input type="email" id="new-email" placeholder="Correo electrónico">
-                <select id="new-role">
-                    <option value="1">Administrador</option>
-                    <option value="2" selected>Empleado</option>
-                </select>
-                <button onclick="crearPersona()">Guardar en Base de Datos</button>
-            </div>
-
-            <button class="logout-btn" onclick="location.reload()">Cerrar Sesión</button>
-        </div>
-
-        <div id="dash-empleado" class="card dash-container hidden user-header">
-            <h1>Panel de Empleado</h1>
-            <p>Hola, bienvenido a tu portal de servicios.</p>
-            <p>Aquí podrás visualizar tus marcaciones y reportes pronto.</p>
-            <button class="logout-btn" onclick="location.reload()">Cerrar Sesión</button>
-        </div>
-        <div class="admin-table-container">
-            <h3>Usuarios Registrados</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Rol</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-usuarios-body">
-                    </tbody>
-            </table>
+            <button onclick="login()">Acceder</button>
         </div>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html>

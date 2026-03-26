@@ -1,72 +1,31 @@
-const SB_URL = "https://vmorgejoxarkypgeavin.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtb3JnZWpveGFya3lwZ2VhdmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDAxODAsImV4cCI6MjA5MDExNjE4MH0.Snj2a7UVGvYhXfE8_1Rx-X91fupnPq-4A9fVMAj38jQ";
-const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-
 async function login() {
     const email = document.getElementById('email-input').value;
-
-    const { data, error } = await supabaseClient
+    const {data, error} = await supabaseClient
         .from('personas')
         .select('nombre, roles(nombre_rol)')
         .eq('email', email)
         .single();
 
-    if (error || !data) {
-        alert("Usuario no registrado en la base de datos.");
-        return;
-    }
+    if (data) {
+        // Guardamos los datos en la sesión del navegador
+        const sesion = {
+            nombre: data.nombre,
+            rol: data.roles.nombre_rol
+        };
+        sessionStorage.setItem('usuario_logueado', JSON.stringify(sesion));
 
-    document.getElementById('login-box').classList.add('hidden');
-    
-    if (data.roles.nombre_rol === 'Administrador') {
-        document.getElementById('dash-admin').classList.remove('hidden');
-        listarUsuarios();
+        // Redirección según el rol
+        if (sesion.rol === 'Administrador') {
+            window.location.href = 'admin.html';
+        } else {
+            window.location.href = 'empleado.html';
+        }
     } else {
-        document.getElementById('dash-empleado').classList.remove('hidden');
+        alert("Usuario no encontrado");
     }
 }
-async function crearPersona() {
-    const nombre = document.getElementById('new-name').value;
-    const email = document.getElementById('new-email').value;
-    const rol_id = document.getElementById('new-role').value;
 
-    const { data, error } = await supabaseClient
-        .from('personas')
-        .insert([{ nombre, email, rol_id }]);
-
-    if (error) {
-        alert("Error al guardar: " + error.message);
-    } else {
-        alert("¡Persona registrada con éxito!");
-        document.getElementById('new-name').value = '';
-        document.getElementById('new-email').value = '';
-    }
-}
-// Función para obtener y listar usuarios
-async function listarUsuarios() {
-    const { data, error } = await supabaseClient
-        .from('personas')
-        .select(`
-            nombre,
-            email,
-            roles (nombre_rol)
-        `);
-
-    if (error) {
-        console.error("Error al listar:", error);
-        return;
-    }
-
-    const tbody = document.getElementById('tabla-usuarios-body');
-    tbody.innerHTML = ''; // Limpiar tabla antes de llenar
-
-    data.forEach(user => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${user.nombre}</td>
-                <td>${user.email}</td>
-                <td>${user.roles.nombre_rol}</td>
-            </tr>
-        `;
-    });
+function logout() {
+    sessionStorage.clear();
+    window.location.href = 'index.html';
 }

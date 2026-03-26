@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Administrativo</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container dash-container">
+        <div class="card admin-header">
+            <h1>Panel Administrativo</h1>
+            <p>Bienvenido, <span id="user-name"></span></p>
+
+            <div class="admin-form">
+                <h3>Registrar Nuevo Usuario</h3>
+                <input type="text" id="new-name" placeholder="Nombre">
+                <input type="email" id="new-email" placeholder="Correo">
+                <select id="new-role"><option value="1">Admin</option><option value="2">Empleado</option></select>
+                <button onclick="crearPersona()">Guardar</button>
+            </div>
+
+            <div class="admin-table-container">
+                <table id="tabla-usuarios">...</table>
+            </div>
+
+            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        // Al cargar esta página, verificamos si hay sesión
+        window.onload = () => {
+            const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+            if (!user || user.rol !== 'Administrador') {
+                window.location.href = 'index.html'; // Redirigir si no es admin
+            }
+            document.getElementById('user-name').innerText = user.nombre;
+            listarUsuarios();
+        };
+    </script>
+</body>
+</html>
