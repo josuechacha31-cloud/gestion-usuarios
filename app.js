@@ -24,3 +24,20 @@ async function login() {
         document.getElementById('dash-empleado').classList.remove('hidden');
     }
 }
+async function crearPersona() {
+    const nombre = document.getElementById('new-name').value;
+    const email = document.getElementById('new-email').value;
+    const rol_id = document.getElementById('new-role').value;
+
+    const { data, error } = await supabaseClient
+        .from('personas')
+        .insert([{ nombre, email, rol_id }]);
+
+    if (error) {
+        alert("Error al guardar: " + error.message);
+    } else {
+        alert("¡Persona registrada con éxito!");
+        document.getElementById('new-name').value = '';
+        document.getElementById('new-email').value = '';
+    }
+}
