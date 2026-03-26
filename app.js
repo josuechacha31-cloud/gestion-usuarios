@@ -20,6 +20,7 @@ async function login() {
     
     if (data.roles.nombre_rol === 'Administrador') {
         document.getElementById('dash-admin').classList.remove('hidden');
+        listarUsuarios();
     } else {
         document.getElementById('dash-empleado').classList.remove('hidden');
     }
@@ -40,4 +41,32 @@ async function crearPersona() {
         document.getElementById('new-name').value = '';
         document.getElementById('new-email').value = '';
     }
+}
+// Función para obtener y listar usuarios
+async function listarUsuarios() {
+    const { data, error } = await supabaseClient
+        .from('personas')
+        .select(`
+            nombre,
+            email,
+            roles (nombre_rol)
+        `);
+
+    if (error) {
+        console.error("Error al listar:", error);
+        return;
+    }
+
+    const tbody = document.getElementById('tabla-usuarios-body');
+    tbody.innerHTML = ''; // Limpiar tabla antes de llenar
+
+    data.forEach(user => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${user.nombre}</td>
+                <td>${user.email}</td>
+                <td>${user.roles.nombre_rol}</td>
+            </tr>
+        `;
+    });
 }
