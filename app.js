@@ -225,3 +225,113 @@ async function actualizarDatos() {
         Swal.fire('Éxito', 'Datos actualizados correctamente', 'success');
     }
 }
+
+// Función para registrar entrada o salida
+async function registrarMarcacion(tipo) {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    const client = getSupabase();
+
+    if (!client) return;
+
+    // Insertamos la marcación vinculada al ID del empleado
+    const {error} = await client
+        .from('asistencias')
+        .insert([{
+            empleado_id: user.id,
+            tipo: tipo
+            // fecha_hora se genera automáticamente en Supabase con DEFAULT NOW()
+        }]);
+
+    if (error) {
+        Swal.fire('Error', 'No se pudo registrar la marcación: ' + error.message, 'error');
+    } else {
+        Swal.fire({
+            icon: 'success',
+            title: `Marcación de ${tipo} exitosa`,
+            timer: 1500,
+            showConfirmButton: false
+        });
+        cargarMisMarcaciones(user.id); // Refrescamos la tabla inmediatamente
+    }
+}
+
+// Función para cargar el historial del empleado
+async function cargarMisMarcaciones(empleadoId) {
+    const client = getSupabase();
+    const {data, error} = await client
+        .from('asistencias')
+        .select('*')
+        .eq('empleado_id', empleadoId)
+        .order('fecha_hora', {ascending: false});
+
+    const tbody = document.getElementById('tabla-asistencias');
+    if (tbody && data) {
+        tbody.innerHTML = data.map(m => {
+            const fecha = new Date(m.fecha_hora);
+            return `
+                <tr>
+                    <td>${fecha.toLocaleDateString()}</td>
+                    <td>${fecha.toLocaleTimeString()}</td>
+                    <td><span class="badge ${m.tipo.toLowerCase()}">${m.tipo}</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+// Función para cargar modales externos
+async function cargarModal(nombreArchivo) {
+    try {
+        const respuesta = await fetch(`modales/${nombreArchivo}.html`);
+        const html = await respuesta.text();
+
+        // Creamos un contenedor temporal y lo inyectamos al body
+        const contenedor = document.createElement('div');
+        contenedor.id = "contenedor-modal";
+        contenedor.innerHTML = html;
+        document.body.appendChild(contenedor);
+    } catch (error) {
+        console.error("Error cargando el modal:", error);
+    }
+}
+
+function cerrarModal() {
+    const m = document.getElementById('contenedor-modal');
+    if (m) m.remove();
+}
+
+async function enviarSolicitud() {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    const f = document.getElementById('fecha_permiso').value;
+    const h1 = document.getElementById('hora_desde').value;
+    const h2 = document.getElementById('hora_hasta').value;
+
+    if (!f || !h1 || !h2) return Swal.fire('Error', 'Llene todos los campos', 'error');
+
+    // Cálculo de diferencia (Lógica pura JS)
+    const inicio = new Date(`2026-01-01T${h1}`);
+    const fin = new Date(`2026-01-01T${h2}`);
+    const diffMs = fin - inicio;
+
+    if (diffMs <= 0) return Swal.fire('Error', 'La hora de fin debe ser mayor', 'error');
+
+    const horasTotales = (diffMs / (1000 * 60 * 60)).toFixed(2);
+
+    const client = getSupabase();
+    const {error} = await client
+        .from('permisos')
+        .insert([{
+            empleado_id: user.id,
+            fecha: f,
+            hora_desde: h1,
+            hora_hasta: h2,
+            total_horas: `${horasTotales} horas`,
+            estado: 'Pendiente',
+            jefe_id: user.jefe_id
+        }]);
+
+    if (!error) {
+        Swal.fire('Éxito', 'Solicitud enviada correctamente', 'success');
+        cerrarModal();
+    }
+}

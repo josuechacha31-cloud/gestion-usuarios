@@ -1,0 +1,25 @@
+<div id="modal-permiso" class="modal-overlay">
+    <div class="card modal-content">
+        <h3>Nueva Solicitud de Permiso</h3>
+        <p>Complete los detalles de su ausencia.</p>
+
+        <label>Fecha:</label>
+        <input type="date" id="fecha_permiso">
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>Desde:</label>
+                <input type="time" id="hora_desde">
+            </div>
+            <div style="flex: 1;">
+                <label>Hasta:</label>
+                <input type="time" id="hora_hasta">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button onclick="enviarSolicitud()" style="background: #10b981;">Enviar</button>
+            <button onclick="cerrarModal()" style="background: #ef4444;">Cancelar</button>
+        </div>
+    </div>
+</div>

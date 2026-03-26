@@ -93,3 +93,22 @@ button:hover {
     background-color: #64748b;
     margin-top: 20px;
 }
+
+/* Etiquetas para tipos de marcación */
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.entrada {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.salida {
+    background-color: #fef3c7;
+    color: #92400e;
+}
