@@ -1,7 +1,12 @@
 const SB_URL = "https://vmorgejoxarkypgeavin.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtb3JnZWpveGFya3lwZ2VhdmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDAxODAsImV4cCI6MjA5MDExNjE4MH0.Snj2a7UVGvYhXfE8_1Rx-X91fupnPq-4A9fVMAj38jQ"; // La llave que empieza con ey...
-const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-window.supabaseClient = supabaseClient;
+let supabaseClient;
+try {
+    supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+    window.supabaseClient = supabaseClient; // Lo hacemos global para los paneles
+} catch (e) {
+    console.error("Error crítico al inicializar Supabase:", e);
+}
 
 async function login() {
     const email = document.getElementById('email-input').value;
