@@ -168,3 +168,33 @@ async function cargarMisMarcaciones(empleadoId) {
         `;
     });
 }
+
+async function listarUsuarios() {
+    const {data, error} = await supabaseClient
+        .from('personas')
+        .select('nombre, apellido, email, roles(nombre_rol)');
+
+    if (error) return console.error(error);
+
+    const tabla = document.getElementById('tabla-usuarios');
+    if (tabla) {
+        tabla.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map(u => `
+                    <tr>
+                        <td>${u.nombre} ${u.apellido}</td>
+                        <td>${u.email}</td>
+                        <td>${u.roles.nombre_rol}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+    }
+}
