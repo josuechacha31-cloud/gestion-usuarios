@@ -1,6 +1,7 @@
 const SB_URL = "https://vmorgejoxarkypgeavin.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtb3JnZWpveGFya3lwZ2VhdmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDAxODAsImV4cCI6MjA5MDExNjE4MH0.Snj2a7UVGvYhXfE8_1Rx-X91fupnPq-4A9fVMAj38jQ"; // La llave que empieza con ey...
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+window.supabaseClient = supabaseClient;
 
 async function login() {
     const email = document.getElementById('email-input').value;
@@ -186,5 +187,20 @@ async function listarUsuarios() {
                 `).join('')}
             </tbody>
         `;
+    }
+}
+
+async function actualizarDatos() {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    const nuevoCelular = document.getElementById('edit-celular').value;
+    const nuevaDir = document.getElementById('edit-direccion').value;
+
+    const {error} = await supabaseClient
+        .from('personas')
+        .update({celular: nuevoCelular, direccion: nuevaDir})
+        .eq('id', user.id);
+
+    if (!error) {
+        Swal.fire('Éxito', 'Datos actualizados correctamente', 'success');
     }
 }
