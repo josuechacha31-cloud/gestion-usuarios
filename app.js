@@ -194,10 +194,6 @@ async function gestionarPermiso(idPermiso, nuevoEstado) {
     }
 }
 
-function logout() {
-    sessionStorage.clear();
-    window.location.href = 'index.html';
-}
 
 async function registrarMarcacion(tipo) {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
@@ -458,4 +454,23 @@ function filtrarUsuarios() {
             }
         }
     }
+}
+
+function cerrarSesion() {
+    sessionStorage.clear();
+    Swal.fire({
+        icon: 'info',
+        title: 'Sesión Finalizada',
+        text: 'Has salido del sistema de la Empresa "X" correctamente.',
+        timer: 1500,
+        showConfirmButton: false
+    }).then(() => {
+        window.location.href = 'index.html';
+    });
+}
+
+function logout() {
+    sessionStorage.clear();
+    window.location.href = 'index.html';
+    cerrarSesion();
 }
