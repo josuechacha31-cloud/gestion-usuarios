@@ -73,21 +73,18 @@ async function login() {
 
 // Función para listar usuarios en el Panel Administrativo
 async function listarUsuarios() {
-    // 1. Obtener el cliente
     const client = getSupabase();
     if (!client) {
-        console.error("El cliente de Supabase no está listo.");
+        setTimeout(listarUsuarios, 200);
         return;
     }
-    // 2. Realizar la consulta
-    const { data, error } = await client
+    const {data, error} = await client
         .from('personas')
         .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol)');
     if (error) {
         console.error("Error de Supabase:", error.message);
         return;
     }
-    // 3. Pintar en el HTML
     const tbody = document.getElementById('cuerpo-tabla');
     if (tbody) {
         tbody.innerHTML = data.map(u => `
@@ -98,7 +95,7 @@ async function listarUsuarios() {
                 <td>${u.cargo || 'N/A'}</td>
                 <td><span class="badge">${u.roles?.nombre_rol || 'Usuario'}</span></td>
                 <td>
-                    <button onclick="eliminarUsuario('${u.id}')" style="background:red; width:auto; padding:5px;">Eliminar</button>
+                    <button onclick="eliminarUsuario('${u.id}')" style="background:red; width:auto; padding:5px; color:white; border-radius:4px;">Eliminar</button>
                 </td>
             </tr>
         `).join('');
@@ -401,5 +398,30 @@ async function verAuditoria() {
                 <td><pre style="font-size: 0.7rem; margin:0;">${JSON.stringify(log.detalles, null, 2)}</pre></td>
             </tr>
         `).join('');
+    }
+}
+
+async function eliminarUsuario(id) {
+    const confirmacion = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción no se puede deshacer",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (confirmacion.isConfirmed) {
+        const client = getSupabase();
+        const {error} = await client.from('personas').delete().eq('id', id);
+
+        if (error) {
+            Swal.fire('Error', 'No se pudo eliminar: ' + error.message, 'error');
+        } else {
+            Swal.fire('Eliminado', 'El usuario ha sido borrado.', 'success');
+            listarUsuarios(); // Refrescamos la tabla
+        }
     }
 }
