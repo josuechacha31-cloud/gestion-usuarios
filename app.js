@@ -258,26 +258,28 @@ async function listarAsistenciasEmpleado() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const client = getSupabase();
 
-    const {data, error} = await client
-        .from('asistencias')
-        .select('*')
-        .eq('empleado_id', user.id)
-        .order('fecha_hora', {ascending: false});
+    const {data, error} = await client.from('asistencias').select('*')
+        .eq('empleado_id', user.id).order('fecha_hora', {ascending: false});
 
-    if (error) {
-        console.error("Error al cargar marcaciones:", error.message);
-        return;
-    }
+    if (error) return;
 
     const tbody = document.getElementById('tabla-asistencias');
     if (tbody && data) {
         if (data.length > 0) {
-            tbody.innerHTML = data.map(m => `
+            tbody.innerHTML = data.map(m => {
+                // Formateamos la fecha a nuestro gusto
+                const fechaObj = new Date(m.fecha_hora);
+                const fechaLimpia = fechaObj.toLocaleString('es-EC', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                }).replace(',', ''); // Quitamos la coma automática
+
+                return `
                 <tr>
                     <td><span class="badge ${m.tipo.toLowerCase()}">${m.tipo}</span></td>
-                    <td>${m.fecha_hora}</td>
-                </tr>
-            `).join('');
+                    <td>${fechaLimpia}</td> </tr>
+            `
+            }).join('');
         } else {
             tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 15px;">No tienes marcaciones aún.</td></tr>';
         }
@@ -311,6 +313,7 @@ async function registrarMarcacion(tipo) {
         Swal.fire('Error', 'No se pudo registrar: ' + error.message, 'error');
     } else {
         Swal.fire('Éxito', `${tipo} registrada correctamente`, 'success');
+        await registrarAuditoria('asistencias', 'INSERT', {tipo: tipo});
         listarAsistenciasEmpleado(); // Refresca la tabla
     }
 }
@@ -386,7 +389,7 @@ async function enviarSolicitud() {
     const formatoIntervalo = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`;
 
     const client = getSupabase();
-    
+
     const {data: dataEmpleado} = await client
         .from('personas')
         .select('jefe_id')
@@ -418,38 +421,50 @@ async function enviarSolicitud() {
         Swal.fire('Error de BD', error.message, 'error');
     } else {
         Swal.fire('Éxito', 'Solicitud enviada correctamente', 'success');
+        await registrarAuditoria('permisos', 'INSERT', {fecha: f, horas: formatoIntervalo});
         cerrarModal();
         cargarMisPermisos();
     }
 }
 
 // --- FUNCIÓN PARA VER LA LISTA DE PERMISOS ---
-async function cargarMisPermisos() {
+async function cargarMisPermisos(desde = '', hasta = '') {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const client = getSupabase();
 
-    const {data, error} = await client
-        .from('permisos')
-        .select('fecha, estado')
-        .eq('empleado_id', user.id)
-        .order('fecha', {ascending: false});
+    let fechaInicio = desde;
+    let fechaFin = hasta;
+
+    // Si no mandan fecha, ponemos el día de HOY
+    if (!fechaInicio) {
+        const hoy = new Date();
+        fechaInicio = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+    }
+    // Si llenó el "desde" pero no el "hasta", buscamos solo ese día específico
+    if (!fechaFin) fechaFin = fechaInicio;
+
+    const {data, error} = await client.from('permisos')
+        .select('fecha, estado').eq('empleado_id', user.id)
+        .gte('fecha', fechaInicio).lte('fecha', fechaFin).order('fecha', {ascending: false});
 
     const tbody = document.getElementById('lista-permisos-usuario');
     if (tbody && data) {
         if (data.length > 0) {
             tbody.innerHTML = data.map(p => {
                 let badgeClass = p.estado === 'Aprobado' ? 'entrada' : (p.estado === 'Rechazado' ? 'delete' : 'update');
-                return `
-                    <tr>
-                        <td>${p.fecha}</td>
-                        <td><span class="badge ${badgeClass}">${p.estado}</span></td>
-                    </tr>
-                `;
+                return `<tr><td>${p.fecha}</td><td><span class="badge ${badgeClass}">${p.estado}</span></td></tr>`;
             }).join('');
         } else {
-            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 15px;">Sin permisos solicitados.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">Sin permisos el ${fechaInicio}.</td></tr>`;
         }
     }
+}
+
+// Disparador del botón de buscar
+function filtrarPermisosEmp() {
+    const desde = document.getElementById('filtro-desde-emp').value;
+    const hasta = document.getElementById('filtro-hasta-emp').value;
+    cargarMisPermisos(desde, hasta);
 }
 
 async function inactivarUsuario(id) {
@@ -692,46 +707,83 @@ async function responderPermiso(idPermiso, nuevoEstado) {
 }
 
 // --- FUNCIÓN DE MONITOREO PARA EL JEFE ---
-async function cargarAsistenciasEquipo() {
+// --- MONITOREO DEL JEFE (BUSCADOR COMBINADO Y SOLO HOY) ---
+async function cargarAsistenciasEquipo(desde = '', hasta = '') {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const client = getSupabase();
-
     if (!user) return;
 
-    // Usamos personas!inner para forzar a Supabase a filtrar por el jefe_id
-    const {data, error} = await client
-        .from('asistencias')
-        .select(`
-            tipo, 
-            fecha_hora, 
-            personas!inner (nombre, apellido, jefe_id)
-        `)
-        .eq('personas.jefe_id', user.id) // Ahora este filtro sí funcionará
-        .order('fecha_hora', {ascending: false})
-        .limit(10);
+    let fechaInicio = desde;
+    let fechaFin = hasta;
 
+    if (!fechaInicio) {
+        const hoy = new Date();
+        fechaInicio = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+    }
+    if (!fechaFin) fechaFin = fechaInicio;
+
+    // Para la BD, la fechaFin debe incluir hasta las 23:59:59 para no perder los marcajes de la tarde
+    const inicioReal = `${fechaInicio} 00:00:00`;
+    const finReal = `${fechaFin} 23:59:59`;
+
+    const {
+        data,
+        error
+    } = await client.from('asistencias').select(`tipo, fecha_hora, personas!inner (nombre, apellido, jefe_id)`)
+        .eq('personas.jefe_id', user.id).gte('fecha_hora', inicioReal).lte('fecha_hora', finReal).order('fecha_hora', {ascending: false});
+
+    // Guardamos la data general en la ventana para poder filtrar por texto rápidamente
+    window.asistenciasEquipoActual = data || [];
+    renderizarAsistenciasJefe(); // Pintamos la tabla
+}
+
+// Función que dibuja y filtra por texto a la vez
+function renderizarAsistenciasJefe() {
+    const filtroNombre = (document.getElementById('filtro-nombre-jefe')?.value || '').toLowerCase();
     const tbody = document.getElementById('lista-asistencias-equipo');
     if (!tbody) return;
 
-    // Si hay un error de base de datos, te lo muestra en la consola (F12)
-    if (error) {
-        console.error("❌ Error de Supabase al cargar marcaciones:", error.message);
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: #ef4444;">Error de BD. Revisa la consola (F12).</td></tr>`;
-        return;
-    }
+    // Cruzamos la data obtenida con lo que el jefe escribe
+    const dataFiltrada = window.asistenciasEquipoActual.filter(m => {
+        const nombreCompleto = `${m.personas.nombre} ${m.personas.apellido}`.toLowerCase();
+        return nombreCompleto.includes(filtroNombre);
+    });
 
-    // Dibujamos la tabla si hay datos
-    if (data && data.length > 0) {
-        tbody.innerHTML = data.map(m => `
-            <tr>
+    if (dataFiltrada.length > 0) {
+        tbody.innerHTML = dataFiltrada.map(m => {
+            const fechaObj = new Date(m.fecha_hora);
+            const fechaLimpia = fechaObj.toLocaleString('es-EC', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(',', '');
+            return `<tr>
                 <td>${m.personas.nombre} ${m.personas.apellido}</td>
                 <td><span class="badge ${m.tipo.toLowerCase()}">${m.tipo}</span></td>
-                <td>${m.fecha_hora}</td>
-            </tr>
-        `).join('');
+                <td>${fechaLimpia}</td>
+            </tr>`;
+        }).join('');
     } else {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 15px;">Sin marcaciones recientes de tu equipo.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 15px;">No hay resultados con estos filtros.</td></tr>';
     }
+}
+
+// Disparadores
+function filtrarFechasJefe() {
+    const desde = document.getElementById('filtro-desde-jefe').value;
+    const hasta = document.getElementById('filtro-hasta-jefe').value;
+    cargarAsistenciasEquipo(desde, hasta);
+}
+
+function limpiarFiltrosJefe() {
+    document.getElementById('filtro-nombre-jefe').value = '';
+    document.getElementById('filtro-desde-jefe').value = '';
+    document.getElementById('filtro-hasta-jefe').value = '';
+    cargarAsistenciasEquipo(); // Vuelve a cargar "Solo Hoy"
 }
 
 // --- 1. FUNCIÓN PARA LEER LOS LOGS (CON FECHAS Y TEXTOS EN ESPAÑOL) ---

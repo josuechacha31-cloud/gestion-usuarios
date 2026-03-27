@@ -45,6 +45,33 @@
             </tbody>
         </table>
     </div>
+    <div class="admin-table-container card">
+        <h3 style="margin-bottom: 15px;">📊 Marcaciones de mi Equipo</h3>
+
+        <div class="search-bar-container"
+             style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; background: #f8fafc; padding: 10px; border-radius: 8px;">
+            <input type="text" id="filtro-nombre-jefe" placeholder="🔍 Buscar por apellido o nombre..."
+                   onkeyup="renderizarAsistenciasJefe()" style="flex: 1; min-width: 200px; margin: 0;">
+            <input type="date" id="filtro-desde-jefe" onchange="filtrarFechasJefe()" style="width: auto; margin: 0;"
+                   title="Desde Fecha">
+            <input type="date" id="filtro-hasta-jefe" onchange="filtrarFechasJefe()" style="width: auto; margin: 0;"
+                   title="Hasta Fecha">
+            <button onclick="limpiarFiltrosJefe()" class="btn-secondary"
+                    style="width: auto; margin: 0; padding: 8px 15px;">Limpiar
+            </button>
+        </div>
+
+        <table id="tabla-monitoreo">
+            <thead>
+            <tr>
+                <th>Empleado</th>
+                <th>Tipo</th>
+                <th>Fecha y Hora</th>
+            </tr>
+            </thead>
+            <tbody id="lista-asistencias-equipo"></tbody>
+        </table>
+    </div>
 
     <div class="admin-table-container card">
         <h3>📊 Marcaciones Recientes de mi Equipo</h3>
