@@ -458,7 +458,7 @@ document.addEventListener('click', function (e) {
         if (passwordInput) {
             const isPassword = passwordInput.getAttribute('type') === 'password';
             passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
-            e.target.textContent = isPassword ? '🙈' : '😮️️';
+            e.target.textContent = isPassword ? '😮' : '️️🙈';
         }
     }
 });
