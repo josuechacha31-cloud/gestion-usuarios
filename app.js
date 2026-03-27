@@ -253,12 +253,21 @@ async function registrarMarcacion(tipo) {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const client = getSupabase();
 
+    // Fabricamos la fecha y hora local exacta de Ecuador
+    const now = new Date();
+    const timestampLocal = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + ' ' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':' +
+        String(now.getSeconds()).padStart(2, '0');
+
     const {error} = await client
         .from('asistencias')
         .insert([{
-            empleado_id: user.id, // Asegúrate que en la tabla 'asistencias' el campo sea tipo UUID
+            empleado_id: user.id,
             tipo: tipo,
-            fecha_hora: new Date().toISOString()
+            fecha_hora: timestampLocal // Usamos la hora local fabricada
         }]);
 
     if (error) {
@@ -266,11 +275,9 @@ async function registrarMarcacion(tipo) {
         Swal.fire('Error', 'No se pudo registrar: ' + error.message, 'error');
     } else {
         Swal.fire('Éxito', `${tipo} registrada correctamente`, 'success');
-        listarAsistenciasEmpleado();
+        listarAsistenciasEmpleado(); // Refresca la tabla
     }
 }
-
-m
 
 // Función para cargar el historial del empleado
 async function cargarMisMarcaciones(empleadoId) {
