@@ -1,19 +1,23 @@
 /* Variables de color para fácil mantenimiento */
 :root {
-    --primary-color: #2563eb;
-    --admin-color: #dc2626;
-    --bg-color: #f8fafc;
-    --text-color: #1e293b;
+    --bg-main: #f8fafc;
+    --header-bg: #0f172a;
+    --header-text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --primary-modern: #3b82f6;
+    --primary-hover: #2563eb;
+    --danger-modern: #ef4444;
     --card-bg: #ffffff;
+    --border-color: #e2e8f0;
 }
 
 body {
-    font-family: 'Inter', sans-serif; /* Usando la fuente que cargamos */
-    background-color: #f1f5f9;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
     color: #1e293b;
     margin: 0;
     display: flex;
-    flex-direction: column; /* Apila Header arriba y Contenido abajo */
+    flex-direction: column;
     min-height: 100vh;
     align-items: stretch;
 }
@@ -175,12 +179,14 @@ pre {
 /* --- HEADER --- */
 .admin-header {
     width: 100%;
-    background: #0f172a;
-    color: white;
-    padding: 1rem 0;
-    position: sticky; /* Se queda fijo al hacer scroll */
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    padding: 0;
+    position: sticky;
     top: 0;
     z-index: 1000;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #1e293b; /* Línea sutil inferior */
 }
 
 .header-container {
@@ -190,28 +196,37 @@ pre {
     justify-content: space-between;
     align-items: center;
     padding: 0 2rem;
+    height: 70px;
 }
 
 .logo-area {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
 }
 
 .header-logo {
-    height: 35px;
+    height: 40px;
 }
 
-.logo-area h1 {
-    font-size: 1.25rem;
+.title-text h1 {
+    font-size: 1.3rem;
     margin: 0;
     font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
-.logo-area .subnet {
-    color: #94a3b8;
+.title-text .subnet {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0;
     font-weight: 400;
-    font-size: 0.9rem;
+}
+
+.user-nav-area {
+    display: flex;
+    align-items: center;
+    gap: 30px;
 }
 
 .user-area {
@@ -236,11 +251,90 @@ pre {
     background: #dc2626;
 }
 
+/* Navegación */
+.main-nav {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 10px 0;
+    transition: color 0.2s, border-color 0.2s;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover {
+    color: var(--header-text);
+}
+
+.nav-link.active {
+    color: var(--primary-modern);
+    border-bottom-color: var(--primary-modern);
+}
+
+/* Perfil de Usuario */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 1px solid #1e293b;
+    padding-left: 20px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--header-text);
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--primary-modern);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.btn-logout-icon {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    transition: color 0.2s;
+}
+
+.btn-logout-icon:hover {
+    color: var(--danger-modern);
+}
+
 /* --- CONTENIDO PRINCIPAL --- */
 .dashboard-container {
     max-width: 1400px;
-    margin: 2rem auto;
+    margin: 1.5rem auto;
     padding: 0 2rem;
+    flex-grow: 1;
 }
 
 /* Barra de Acciones */
