@@ -366,34 +366,6 @@ async function enviarSolicitud() {
     }
 }
 
-async function verAuditoria() {
-    await cargarModal('modal_auditoria');
-    const client = getSupabase();
-
-    const {data, error} = await client
-        .from('auditoria')
-        .select('*, personas(nombre, apellido)')
-        .order('fecha_hora', {ascending: false})
-        .limit(50);
-
-    const tbody = document.getElementById('tabla-logs-auditoria');
-    if (tbody && data) {
-        tbody.innerHTML = data.map(log => {
-
-            const responsable = log.personas ? `${log.personas.nombre} ${log.personas.apellido}` : 'Sistema';
-
-            return `
-            <tr>
-                <td>${log.fecha_hora}</td>
-                <td><strong>${responsable}</strong></td> <td><strong>${log.tabla_afectada}</strong></td>
-                <td><span class="badge ${log.accion.toLowerCase()}">${log.accion}</span></td>
-                <td><pre>${JSON.stringify(log.detalles, null, 2)}</pre></td>
-            </tr>
-        `
-        }).join('');
-    }
-}
-
 async function inactivarUsuario(id) {
     const confirmacion = await Swal.fire({
         title: '¿Inactivar Usuario?',
@@ -631,12 +603,55 @@ async function cargarAsistenciasEquipo() {
     }
 }
 
-// --- NUEVA FUNCIÓN DE AUDITORÍA MANUAL ---
+// --- 1. FUNCIÓN PARA LEER LOS LOGS ---
+async function verAuditoria() {
+    await cargarModal('modal_auditoria');
+    const client = getSupabase();
+
+    // Consultamos la auditoría y cruzamos con la tabla personas
+    const {data, error} = await client
+        .from('auditoria')
+        .select('*, personas(nombre, apellido)')
+        .order('fecha_hora', {ascending: false})
+        .limit(50);
+
+    // ¡NUEVO!: Si hay un error en la BD, te lo mostrará en pantalla
+    if (error) {
+        console.error("Error detallado de Supabase:", error);
+        Swal.fire('Error de Base de Datos', 'No se pudieron cargar los logs: ' + error.message, 'error');
+        return;
+    }
+
+    const tbody = document.getElementById('tabla-logs-auditoria');
+    if (tbody) {
+        if (data && data.length > 0) {
+            tbody.innerHTML = data.map(log => {
+                const responsable = log.personas ? `${log.personas.nombre} ${log.personas.apellido}` : 'Sistema / Desconocido';
+                return `
+                <tr>
+                    <td>${log.fecha_hora}</td>
+                    <td><strong>${responsable}</strong></td>
+                    <td><strong>${log.tabla_afectada}</strong></td>
+                    <td><span class="badge ${log.accion.toLowerCase()}">${log.accion}</span></td>
+                    <td><pre>${JSON.stringify(log.detalles, null, 2)}</pre></td>
+                </tr>
+            `
+            }).join('');
+        } else {
+            // Si no hay datos, muestra este mensaje en lugar de quedarse en blanco
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">No hay registros de auditoría todavía.</td></tr>';
+        }
+    }
+}
+
+// --- 2. FUNCIÓN PARA GUARDAR LOS LOGS ---
 async function registrarAuditoria(tabla, accion, detalles) {
     const client = getSupabase();
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
 
     if (!user) return;
+
+    // Hora exacta local
     const now = new Date();
     const timestampLocal = now.getFullYear() + '-' +
         String(now.getMonth() + 1).padStart(2, '0') + '-' +
@@ -645,13 +660,18 @@ async function registrarAuditoria(tabla, accion, detalles) {
         String(now.getMinutes()).padStart(2, '0') + ':' +
         String(now.getSeconds()).padStart(2, '0');
 
-    await client.from('auditoria').insert([{
+    const {error} = await client.from('auditoria').insert([{
         usuario_id: user.id,
         tabla_afectada: tabla,
         accion: accion,
         detalles: detalles,
         fecha_hora: timestampLocal
     }]);
+
+    // ¡NUEVO!: Si falla al guardar, te lo imprime en la consola (F12)
+    if (error) {
+        console.error("❌ Error al guardar en auditoría:", error.message);
+    }
 }
 
 // --- FUNCIÓN PARA REACTIVAR USUARIOS ---
