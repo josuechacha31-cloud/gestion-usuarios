@@ -2,20 +2,60 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login | Sistema Gestión</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso al Sistema - Empresa "X"</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-<div class="container">
-    <div class="card">
-        <h2>Iniciar Sesión</h2>
-        <input type="email" id="email-input" placeholder="ejemplo@correo.com">
-        <input type="password" id="password-input" placeholder="Contraseña">
-        <button onclick="login()">Acceder</button>
+<body class="login-body">
+
+    <div class="login-card card">
+
+        <div class="login-header">
+            <img src="favicon.ico" alt="Logo Empresa X" class="login-logo">
+            <h2>Empresa "X"</h2>
+            <p class="login-subtitle">Sistema de Control de Asistencias y Permisos</p>
+        </div>
+
+        <form id="form-login" class="login-form">
+            <h3 class="form-title">Iniciar Sesión</h3>
+
+            <div class="form-group">
+                <label for="email">Correo Electrónico</label>
+                <div class="input-with-icon">
+                    <span class="icon">✉️</span>
+                    <input type="email" id="email" placeholder="usuario@empresax.com" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <div class="input-with-icon">
+                    <span class="icon">🔒</span>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary-login">🔑 Acceder al Sistema</button>
+                <a href="#" class="forgot-password">¿Olvidó su contraseña?</a>
+            </div>
+        </form>
     </div>
-</div>
-<script src="app.js"></script>
+
+    <script src="app.js"></script>
+    <script>
+        window.onload = function() {
+            const form = document.getElementById('form-login');
+            if (form) {
+                form.onsubmit = function(event) {
+                    event.preventDefault(); // Previene recarga de página
+                    login();
+                };
+            }
+        };
+    </script>
 </body>
 </html>

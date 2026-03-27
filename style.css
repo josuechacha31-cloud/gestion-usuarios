@@ -507,3 +507,147 @@ pre {
     gap: 1.5rem;
     flex-wrap: wrap;
 }
+
+/* --- ESTILOS ESPECÍFICOS DEL LOGIN MODERNO --- */
+
+/* 1. Body del Login - Centrado Absoluto */
+.login-body {
+    background-color: #f8fafc; /* Gris muy claro de fondo */
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: #1e293b;
+}
+
+/* 2. Tarjeta de Login */
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    padding: 2.5rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+
+/* 3. Área del Logo y Título */
+.login-header {
+    margin-bottom: 2rem;
+}
+
+.login-logo {
+    height: 60px; /* Tamaño del logo centralizado */
+    margin-bottom: 1rem;
+    /* Efecto opcional de sombra en el logo */
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.login-header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 800;
+    color: #0f172a; /* Azul Marino Profundo (igual que el header dash) */
+    letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+    font-size: 0.9rem;
+    color: #94a3b8; /* Gris medio muted */
+    margin-top: 5px;
+    margin-bottom: 0;
+    font-weight: 400;
+}
+
+/* 4. Formulario */
+.login-form {
+    text-align: left; /* Alinea los campos a la izquierda */
+}
+
+.form-title {
+    font-size: 1.1rem;
+    color: #334155;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 5px;
+}
+
+/* Inputs con Iconos */
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon .icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1rem;
+    color: #94a3b8;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: 12px 12px 12px 40px; /* Padding izquierdo para el icono */
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-with-icon input:focus {
+    border-color: #3b82f6; /* Azul Eléctrico Moderno (igual que el avatar dash) */
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 5. Acciones y Botones */
+.form-actions {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.btn-primary-login {
+    width: 100%;
+    background-color: #3b82f6; /* Azul Eléctrico Moderno */
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 1rem;
+}
+
+.btn-primary-login:hover {
+    background-color: #2563eb; /* Azul Eléctrico más oscuro */
+}
+
+.forgot-password {
+    display: block;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.forgot-password:hover {
+    color: #3b82f6;
+}
