@@ -571,3 +571,36 @@ async function responderPermiso(idPermiso, nuevoEstado) {
         Swal.fire('Error', 'No se pudo procesar la solicitud', 'error');
     }
 }
+
+// --- FUNCIÓN DE MONITOREO PARA EL JEFE ---
+async function cargarAsistenciasEquipo() {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    const client = getSupabase();
+
+    // Consultamos asistencias de personas que tienen a este usuario como su jefe_id
+    const {data, error} = await client
+        .from('asistencias')
+        .select(`
+            tipo, 
+            fecha_hora, 
+            personas!empleado_id (nombre, apellido, jefe_id)
+        `)
+        .eq('personas.jefe_id', user.id) // Solo gente a mi cargo
+        .order('fecha_hora', {ascending: false})
+        .limit(10); // Solo las últimas 10 para no saturar
+
+    const tbody = document.getElementById('lista-asistencias-equipo');
+    if (!tbody) return;
+
+    if (data && data.length > 0) {
+        tbody.innerHTML = data.map(m => `
+            <tr>
+                <td>${m.personas.nombre} ${m.personas.apellido}</td>
+                <td><span class="badge ${m.tipo.toLowerCase()}">${m.tipo}</span></td>
+                <td>${new Date(m.fecha_hora).toLocaleString()}</td>
+            </tr>
+        `).join('');
+    } else {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin marcaciones recientes.</td></tr>';
+    }
+}

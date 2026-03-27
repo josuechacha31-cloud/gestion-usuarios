@@ -2,27 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Control | Jefatura</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Jefatura - Empresa "X"</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
+<body class="admin-body">
+
 <div class="dashboard-container">
-    <div class="header-card-modern">
-        <h2>Panel de Control | Jefatura</h2>
-        <p>Gestión y Revisión de Solicitudes de Permiso</p>
-    </div>
+    <header class="admin-header-compact">
+        <div class="logo-area">
+            <img src="favicon.ico" alt="Logo" class="header-logo">
+            <div class="title-text">
+                <h1>Empresa "X"</h1>
+                <p class="subnet">Panel de Jefatura / Control de Equipo</p>
+            </div>
+        </div>
+        <div class="user-profile">
+            <div class="user-info">
+                <span class="user-name" id="jefe-name">Cargando...</span>
+                <span class="user-role">Jefe de Área</span>
+            </div>
+            <button onclick="cerrarSesion()" class="btn-logout-modern">Salir 🚪</button>
+        </div>
+    </header>
 
     <div class="admin-table-container card">
-        <h3>Solicitudes Pendientes de Mi Equipo</h3>
-        <table>
+        <h3>🚨 Solicitudes de Permiso Pendientes</h3>
+        <table id="tabla-permisos">
             <thead>
             <tr>
                 <th>Empleado</th>
-                <th>Fecha Permiso</th>
+                <th>Fecha</th>
                 <th>Horario</th>
-                <th>Total Horas</th>
+                <th>Total</th>
                 <th>Acciones</th>
             </tr>
             </thead>
@@ -30,7 +45,23 @@
             </tbody>
         </table>
     </div>
+
+    <div class="admin-table-container card">
+        <h3>📊 Marcaciones Recientes de mi Equipo</h3>
+        <table id="tabla-monitoreo">
+            <thead>
+            <tr>
+                <th>Empleado</th>
+                <th>Tipo</th>
+                <th>Fecha y Hora</th>
+            </tr>
+            </thead>
+            <tbody id="lista-asistencias-equipo">
+            </tbody>
+        </table>
+    </div>
 </div>
+
 <script src="app.js"></script>
 <script>
     window.onload = () => {
@@ -39,6 +70,7 @@
         if (user) {
             document.getElementById('jefe-name').innerText = `${user.nombre} ${user.apellido}`;
             cargarPermisosJefe();
+            cargarAsistenciasEquipo();
         }
     };
 </script>
