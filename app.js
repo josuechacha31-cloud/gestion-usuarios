@@ -89,15 +89,20 @@ async function listarUsuarios() {
         return;
     }
 
-    // Asegurarnos de incluir 'activo' en el .select()
+    // Aseguramos pedir el campo 'activo'
     const {data, error} = await client
         .from('personas')
         .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol), password, activo')
-        .order('nombre', {ascending: true}); // Ordenados alfabéticamente
+        .order('nombre', {ascending: true});
 
     const tbody = document.getElementById('cuerpo-tabla');
     if (tbody && data) {
-        tbody.innerHTML = data.map(u => `
+        tbody.innerHTML = data.map(u => {
+            // Manejamos el estado (por si hay registros antiguos sin el campo)
+            const estadoTexto = u.activo !== false ? 'Activo' : 'Inactivo';
+            const estadoClase = u.activo !== false ? 'entrada' : 'delete'; // Verde o Rojo
+
+            return `
             <tr class="table-row">
                 <td>${u.nombre} ${u.apellido}</td>
                 <td>${u.cedula}</td>
@@ -105,20 +110,17 @@ async function listarUsuarios() {
                 <td>${u.cargo || 'N/A'}</td>
                 <td><span class="badge ${u.roles?.nombre_rol.toLowerCase()}">${u.roles?.nombre_rol}</span></td>
                 
-                <td>
-                    <span class="badge ${u.activo ? 'entrada' : 'delete'}">
-                        ${u.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                </td>
+                <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
                 
                 <td>
                     <div class="action-buttons">
                         <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit" title="Editar">✏️</button>
-                        ${u.activo ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar">🚫</button>` : ''}
+                        ${u.activo !== false ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar">🚫</button>` : ''}
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `
+        }).join('');
     }
 }
 
@@ -159,16 +161,17 @@ async function crearPersona() {
     const {error} = await client.from('personas').insert([nuevaPersona]);
 
     if (error) {
+        cerrarModal();
         Swal.fire('Error de Registro', 'No se pudo guardar: ' + error.message, 'error');
     } else {
+        cerrarModal();
         await Swal.fire({
             icon: 'success',
             title: '¡Empleado Registrado!',
-            text: 'El nuevo integrante ha sido añadido a la Empresa "X".',
+            text: 'El nuevo integrante ha sido añadido.',
             timer: 2000
         });
-        cerrarModal();
-        listarUsuarios(); // Refresca la tabla del dashboard
+        listarUsuarios();
     }
 }
 
@@ -509,11 +512,12 @@ async function actualizarPersona(id) {
     const {error} = await client.from('personas').update(datos).eq('id', id);
 
     if (error) {
+        cerrarModal();
         Swal.fire('Error', 'No se pudo actualizar: ' + error.message, 'error');
     } else {
-        await Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
         cerrarModal();
-        listarUsuarios(); // Refresca la tabla automáticamente sin recargar la página
+        await Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
+        listarUsuarios(); // Ahora sí refresca la lista al instante
     }
 }
 

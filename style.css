@@ -134,7 +134,7 @@ button:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 999999;
 }
 
 .modal-content {
@@ -479,6 +479,7 @@ pre {
     margin: 0;
     color: #0f172a;
 }
+
 .btn-close-modal:hover {
     color: #ef4444;
 }
