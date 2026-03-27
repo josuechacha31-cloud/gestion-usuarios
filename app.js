@@ -32,13 +32,12 @@ async function login() {
     const email = document.getElementById('email-input').value;
     const pass = document.getElementById('password-input').value;
 
-    // Obtenemos el cliente usando nuestra nueva función segura
     const client = getSupabase();
-
     if (!client) {
-        Swal.fire('Error', 'No se pudo inicializar la base de datos. Verifica tu conexión.', 'error');
+        Swal.fire('Error', 'No se pudo inicializar la base de datos.', 'error');
         return;
     }
+    if (!email || !pass) return;
 
     const {data, error} = await client
         .from('personas')
@@ -69,6 +68,14 @@ async function login() {
             text: 'Correo o contraseña incorrectos.'
         });
     }
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.id === 'toggle-password') {
+            const passwordInput = document.getElementById('password');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            e.target.textContent = type === 'password' ? '👁️' : '🙈';
+        }
+    });
 }
 
 // Función para listar usuarios en el Panel Administrativo

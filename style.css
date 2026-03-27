@@ -590,6 +590,8 @@ pre {
 /* Inputs con Iconos */
 .input-with-icon {
     position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .input-with-icon .icon {
@@ -650,4 +652,26 @@ pre {
 
 .forgot-password:hover {
     color: #3b82f6;
+}
+
+.btn-toggle-eye {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 1.1rem;
+    color: #94a3b8;
+    transition: color 0.2s;
+    width: auto; /* Para que no herede el 100% de los botones generales */
+}
+
+.btn-toggle-eye:hover {
+    color: #3b82f6;
+}
+
+/* Evita que el texto de la contraseña choque con el icono del ojo */
+#password {
+    padding-right: 45px;
 }
