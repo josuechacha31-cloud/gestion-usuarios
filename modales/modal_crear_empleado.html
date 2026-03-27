@@ -1,75 +1,63 @@
 <div id="contenedor-modal" class="modal-overlay">
     <div class="card modal-content">
         <div class="modal-header">
-            <h3>Registrar Nuevo Empleado - Empresa "X"</h3>
+            <h3>Registrar/Editar Empleado - Empresa "X"</h3>
             <button onclick="cerrarModal()" class="btn-close-modal">×</button>
         </div>
 
-        <p class="modal-subtitle">Complete la información personal y laboral del nuevo integrante.</p>
-
         <form id="form-crear-usuario" class="grid-form-2-col">
-
             <div class="form-section">
                 <h4>Información Personal</h4>
                 <div class="form-group">
                     <label>Nombres *</label>
-                    <input type="text" id="new-name" placeholder="Ej: Juan Pedro" required>
+                    <input type="text" id="new-name" required>
                 </div>
                 <div class="form-group">
                     <label>Apellidos *</label>
-                    <input type="text" id="new-lastname" placeholder="Ej: Pérez Gómez" required>
+                    <input type="text" id="new-lastname" required>
                 </div>
                 <div class="form-group">
                     <label>Cédula/DNI *</label>
-                    <input type="text" id="new-cedula" placeholder="Ej: 1104567890" required>
+                    <input type="text" id="new-cedula" required>
                 </div>
                 <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" id="new-phone" placeholder="Ej: 0998765432">
+                    <label>Dirección</label>
+                    <input type="text" id="new-address">
                 </div>
-            </div>
-            <div class="form-group">
-                <label>Remuneración ($)</label>
-                <input type="number" id="new-salary" step="0.01" placeholder="Ej: 850.00">
             </div>
 
             <div class="form-section">
                 <h4>Información Laboral</h4>
                 <div class="form-group">
                     <label>Correo Electrónico *</label>
-                    <input type="email" id="new-email" placeholder="juan.perez@empresax.com" required>
+                    <input type="email" id="new-email" required>
                 </div>
                 <div class="form-group">
                     <label>Contraseña *</label>
-                    <input type="password" id="new-password" placeholder="Min. 8 caracteres" required>
+                    <input type="password" id="new-password" required>
                 </div>
                 <div class="form-group">
                     <label>Cargo</label>
-                    <input type="text" id="new-cargo" placeholder="Ej: Analista de Sistemas">
+                    <input type="text" id="new-cargo">
+                </div>
+                <div class="form-group">
+                    <label>Remuneración ($)</label>
+                    <input type="number" id="new-salary" step="0.01">
                 </div>
                 <div class="form-group">
                     <label>Rol de Acceso *</label>
                     <select id="new-role" required>
-                        <option value="" disabled selected>Seleccione un Rol</option>
                         <option value="1">Administrador</option>
                         <option value="2">Empleado</option>
                         <option value="3">Jefe</option>
                     </select>
                 </div>
             </div>
-
-            <div class="form-full-width">
-                <div class="form-group">
-                    <label>Dirección Domiciliaria</label>
-                    <input type="text" id="new-address" placeholder="Av. Principal y Calle Secundaria">
-                </div>
-            </div>
-
         </form>
 
         <div class="modal-footer">
             <button onclick="cerrarModal()" class="btn-secondary">Cancelar</button>
-            <button onclick="crearPersona()" class="btn-primary">💾 Guardar Empleado</button>
+            <button id="btn-guardar-persona" onclick="crearPersona()" class="btn-primary">💾 Guardar</button>
         </div>
     </div>
 </div>
