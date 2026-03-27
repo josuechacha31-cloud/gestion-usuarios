@@ -241,27 +241,20 @@ async function registrarMarcacion(tipo) {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const client = getSupabase();
 
-    if (!client) return;
-
-    // Insertamos la marcación vinculada al ID del empleado
     const {error} = await client
         .from('asistencias')
         .insert([{
-            empleado_id: user.id,
-            tipo: tipo
-            // fecha_hora se genera automáticamente en Supabase con DEFAULT NOW()
+            empleado_id: user.id, // Asegúrate que en la tabla 'asistencias' el campo sea tipo UUID
+            tipo: tipo,
+            fecha_hora: new Date().toISOString()
         }]);
 
     if (error) {
-        Swal.fire('Error', 'No se pudo registrar la marcación: ' + error.message, 'error');
+        console.error(error);
+        Swal.fire('Error', 'No se pudo registrar: ' + error.message, 'error');
     } else {
-        Swal.fire({
-            icon: 'success',
-            title: `Marcación de ${tipo} exitosa`,
-            timer: 1500,
-            showConfirmButton: false
-        });
-        cargarMisMarcaciones(user.id); // Refrescamos la tabla inmediatamente
+        Swal.fire('Éxito', `${tipo} registrada correctamente`, 'success');
+        listarAsistenciasEmpleado();
     }
 }
 

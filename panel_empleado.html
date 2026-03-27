@@ -2,60 +2,98 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mi Perfil | Empleado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Empleado - Empresa "X"</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-<div class="container dash-container">
-    <div class="card user-header">
-        <h1>Panel de Empleado</h1>
-        <p>Bienvenido, <span id="emp-name"></span></p>
+<body class="admin-body">
 
-        <div class="admin-form">
-            <h3>Mis Datos Personales</h3>
-            <input type="text" id="edit-celular" placeholder="Celular">
-            <input type="text" id="edit-direccion" placeholder="Dirección">
-            <button onclick="actualizarDatos()">Actualizar Datos</button>
+<div class="dashboard-container">
+    <header class="admin-header-compact">
+        <div class="logo-area">
+            <img src="favicon.ico" alt="Logo" class="header-logo">
+            <div class="title-text">
+                <h1>Empresa "X"</h1>
+                <p class="subnet">Panel de Empleado / Autoservicio</p>
+            </div>
         </div>
-
-        <hr>
-        <h3>Control de Asistencia</h3>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="registrarMarcacion('Entrada')" style="background: #10b981;">Entrada</button>
-            <button onclick="registrarMarcacion('Salida')" style="background: #f59e0b;">Salida</button>
+        <div class="user-profile">
+            <div class="user-info">
+                <span class="user-name" id="emp-name">Cargando...</span>
+                <span class="user-role" id="emp-cargo">Empleado</span>
+            </div>
+            <button onclick="cerrarSesion()" class="btn-logout-modern">Salir 🚪</button>
         </div>
+    </header>
 
-        <div class="admin-table-container">
-            <h3>Mis Marcaciones del Mes</h3>
-            <table>
+    <div class="action-bar card" style="justify-content: center; gap: 20px; padding: 30px;">
+        <div style="text-align: center;">
+            <h2 id="reloj-digital" style="font-size: 2.5rem; margin-bottom: 10px; color: #1e293b;">00:00:00</h2>
+            <div class="buttons-group">
+                <button onclick="registrarMarcacion('Entrada')" class="btn-primary"
+                        style="background-color: #10b981; padding: 15px 30px;">📥 Marcar Entrada
+                </button>
+                <button onclick="registrarMarcacion('Salida')" class="btn-secondary"
+                        style="background-color: #f59e0b; color: white; padding: 15px 30px;">📤 Marcar Salida
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-2-col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <div class="admin-table-container card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>📑 Mis Permisos</h3>
+                <button onclick="cargarModal('modal_crear_permiso')" class="btn-primary" style="font-size: 0.8rem;">+
+                    Solicitar
+                </button>
+            </div>
+            <table id="tabla-permisos-emp">
                 <thead>
                 <tr>
                     <th>Fecha</th>
-                    <th>Hora</th>
+                    <th>Estado</th>
+                </tr>
+                </thead>
+                <tbody id="lista-permisos-usuario"></tbody>
+            </table>
+        </div>
+
+        <div class="admin-table-container card">
+            <h3>🕒 Últimas Marcaciones</h3>
+            <table>
+                <thead>
+                <tr>
                     <th>Tipo</th>
+                    <th>Fecha y Hora</th>
                 </tr>
                 </thead>
                 <tbody id="tabla-asistencias"></tbody>
             </table>
         </div>
-        <button onclick="cargarModal('modal_crear_permiso')" style="background: #6366f1;">
-            Solicitar Permiso
-        </button>
-
-        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
+
+<div id="modal-container"></div>
+
 <script src="app.js"></script>
 <script>
+    // Reloj en tiempo real
+    setInterval(() => {
+        document.getElementById('reloj-digital').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+
     window.onload = () => {
+        verificarAcceso('Empleado');
         const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-        if (!user) window.location.href = 'index.html';
-        document.getElementById('emp-name').innerText = user.nombre;
-        document.getElementById('edit-celular').value = user.celular || '';
-        document.getElementById('edit-direccion').value = user.direccion || '';
-        cargarMisMarcaciones(user.id);
+        if (user) {
+            document.getElementById('emp-name').innerText = `${user.nombre} ${user.apellido}`;
+            document.getElementById('emp-cargo').innerText = user.cargo || 'Colaborador';
+            listarAsistenciasEmpleado();
+        }
     };
 </script>
 </body>
