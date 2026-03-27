@@ -364,32 +364,30 @@ async function enviarSolicitud() {
 }
 
 async function verAuditoria() {
-    // 1. Abrimos el modal primero
     await cargarModal('modal_auditoria');
-
     const client = getSupabase();
-    // 2. Consultamos los últimos 50 movimientos
+
     const {data, error} = await client
         .from('auditoria')
-        .select('*')
+        .select('*, personas(nombre, apellido)')
         .order('fecha_hora', {ascending: false})
         .limit(50);
 
-    if (error) {
-        console.error("Error al cargar auditoría:", error);
-        return;
-    }
-
     const tbody = document.getElementById('tabla-logs-auditoria');
-    if (tbody) {
-        tbody.innerHTML = data.map(log => `
+    if (tbody && data) {
+        tbody.innerHTML = data.map(log => {
+
+            const responsable = log.personas ? `${log.personas.nombre} ${log.personas.apellido}` : 'Sistema';
+
+            return `
             <tr>
-                <td>${new Date(log.fecha_hora).toLocaleString()}</td>
-                <td><strong>${log.tabla_afectada}</strong></td>
+                <td>${log.fecha_hora}</td>
+                <td><strong>${responsable}</strong></td> <td><strong>${log.tabla_afectada}</strong></td>
                 <td><span class="badge ${log.accion.toLowerCase()}">${log.accion}</span></td>
-                <td><pre style="font-size: 0.7rem; margin:0;">${JSON.stringify(log.detalles, null, 2)}</pre></td>
+                <td><pre>${JSON.stringify(log.detalles, null, 2)}</pre></td>
             </tr>
-        `).join('');
+        `
+        }).join('');
     }
 }
 
@@ -415,6 +413,7 @@ async function inactivarUsuario(id) {
         if (error) {
             Swal.fire('Error', 'No se pudo inactivar: ' + error.message, 'error');
         } else {
+            await registrarAuditoria('personas', 'UPDATE', {id_afectado: id, estado_nuevo: 'Inactivo'});
             await Swal.fire('Usuario Inactivado', 'El registro ahora es histórico.', 'success');
             listarUsuarios();
         }
@@ -526,6 +525,7 @@ async function actualizarPersona(id) {
         Swal.fire('Error', 'No se pudo actualizar: ' + error.message, 'error');
     } else {
         cerrarModal();
+        await registrarAuditoria('personas', 'UPDATE', datos);
         await Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
         listarUsuarios(); // Ahora sí refresca la lista al instante
     }
@@ -626,4 +626,27 @@ async function cargarAsistenciasEquipo() {
     } else {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin marcaciones recientes.</td></tr>';
     }
+}
+
+// --- NUEVA FUNCIÓN DE AUDITORÍA MANUAL ---
+async function registrarAuditoria(tabla, accion, detalles) {
+    const client = getSupabase();
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+
+    if (!user) return;
+    const now = new Date();
+    const timestampLocal = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + ' ' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':' +
+        String(now.getSeconds()).padStart(2, '0');
+
+    await client.from('auditoria').insert([{
+        usuario_id: user.id,
+        tabla_afectada: tabla,
+        accion: accion,
+        detalles: detalles,
+        fecha_hora: timestampLocal
+    }]);
 }
