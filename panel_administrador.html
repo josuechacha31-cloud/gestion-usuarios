@@ -13,31 +13,24 @@
 
 <header class="admin-header">
     <div class="header-container">
-
         <div class="logo-area">
-            <img src="favicon.ico" alt="Logo Empresa X" class="header-logo">
-            <div class="title-text">
+            <img src="favicon.ico" alt="Logo" class="header-logo">
+            <div class="title-group">
                 <h1>Empresa "X"</h1>
-                <p class="subnet">Panel de Control Administrativo</p>
+                <span class="subnet">Panel Administrativo</span>
             </div>
         </div>
-
         <div class="user-nav-area">
-            <nav class="main-nav">
-                <a href="#" class="nav-link active">Dashboard</a>
-                <a href="#" onclick="verAuditoria()" class="nav-link">Auditoría</a>
-                <a href="#" class="nav-link">Reportes</a>
-            </nav>
-
             <div class="user-profile">
                 <div class="user-info">
-                    <span class="user-name" id="admin-name">Cargando...</span>
+                    <span id="admin-name" class="user-name">Cargando...</span>
                     <span class="user-role">Administrador</span>
                 </div>
-                <button onclick="cerrarSesion()" class="btn-logout-icon" title="Cerrar Sesión">
-                    <i>Cerrar Sesión</i>
-                </button>
+                <div class="user-avatar">AD</div>
             </div>
+            <button onclick="cerrarSesion()" class="btn-logout-modern" title="Cerrar Sesión">
+                SALIR <span>🚪</span>
+            </button>
         </div>
     </div>
 </header>

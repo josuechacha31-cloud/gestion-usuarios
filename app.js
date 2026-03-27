@@ -449,3 +449,14 @@ function logout() {
     window.location.href = 'index.html';
     cerrarSesion();
 }
+
+document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'toggle-password') {
+        const passwordInput = document.getElementById('password');
+        if (passwordInput) {
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            e.target.textContent = isPassword ? '🙈' : '👁️';
+        }
+    }
+});
