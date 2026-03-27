@@ -479,15 +479,6 @@ pre {
     margin: 0;
     color: #0f172a;
 }
-
-.btn-close-modal {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #94a3b8;
-    cursor: pointer;
-}
-
 .btn-close-modal:hover {
     color: #ef4444;
 }
@@ -729,6 +720,22 @@ pre {
     background-color: #dc2626;
 }
 
+.admin-table-container h3 {
+    text-align: center;
+    padding: 10px 0;
+    color: var(--header-bg);
+}
+
+table thead tr {
+    background-color: #f1f5f9;
+}
+
+table th {
+    color: #475569;
+    padding: 12px;
+    border-bottom: 2px solid var(--border-color);
+}
+
 .table-row:hover {
     background-color: #f1f5f9;
     transition: background 0.2s;
@@ -787,4 +794,33 @@ pre {
 
 .btn-approve:hover {
     background-color: #059669 !important;
+}
+
+#modal-auditoria .modal-content {
+    max-width: 900px;
+    background: #ffffff;
+}
+
+#tabla-logs-auditoria pre {
+    max-width: 300px;
+    overflow-x: auto;
+    font-size: 0.75rem;
+}
+
+/* Botón X del modal en cuadrado alineado */
+.btn-close-modal {
+    background: #f1f5f9;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.btn-close-modal:hover {
+    background: #fee2e2;
+    color: #ef4444;
 }

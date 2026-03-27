@@ -381,19 +381,19 @@ async function eliminarUsuario(id) {
         text: "Se borrarán todos los registros vinculados (asistencias, permisos).",
         icon: 'warning',
         showCancelButton: true,
+        confirmButtonColor: '#ef4444',
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
     });
 
     if (confirmacion.isConfirmed) {
-        const client = getSupabase();
-        const {error} = await client.from('personas').delete().eq('id', id);
+        const client = getSupabase(); //
+        const {error} = await client.from('personas').delete().eq('id', id); //
 
         if (error) {
-            console.error(error);
-            Swal.fire('Error', 'No se pudo eliminar de la BD: ' + error.message, 'error');
+            Swal.fire('Error', 'No se pudo eliminar: ' + error.message, 'error');
         } else {
-            Swal.fire('Eliminado', 'Registro borrado de la Empresa X.', 'success');
+            await Swal.fire('Eliminado', 'Registro borrado de la Empresa X.', 'success');
             listarUsuarios();
         }
     }
@@ -484,9 +484,9 @@ async function abrirModalEditar(usuario) {
 }
 
 async function actualizarPersona(id) {
-    const client = getSupabase();
+    const client = getSupabase(); //
 
-    const datosActualizados = {
+    const datos = {
         nombre: document.getElementById('new-name').value,
         apellido: document.getElementById('new-lastname').value,
         cedula: document.getElementById('new-cedula').value,
@@ -494,21 +494,17 @@ async function actualizarPersona(id) {
         password: document.getElementById('new-password').value,
         cargo: document.getElementById('new-cargo').value,
         remuneracion: parseFloat(document.getElementById('new-salary').value) || 0,
-        direccion: document.getElementById('new-address').value,
         rol_id: parseInt(document.getElementById('new-role').value)
     };
 
-    const {error} = await client
-        .from('personas')
-        .update(datosActualizados)
-        .eq('id', id); // Aquí el ID es el UUID del usuario
+    const {error} = await client.from('personas').update(datos).eq('id', id); //
 
     if (error) {
         Swal.fire('Error', 'No se pudo actualizar: ' + error.message, 'error');
     } else {
-        await Swal.fire('Éxito', 'Información actualizada correctamente.', 'success');
-        cerrarModal();
-        listarUsuarios();
+        await Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
+        cerrarModal(); // Cierra el modal tras el éxito
+        listarUsuarios(); // Refresca la lista
     }
 }
 
