@@ -1,0 +1,25 @@
+<div id="modal-auditoria" class="modal-overlay" style="max-width: 800px; width: 95%;">
+    <div class="card modal-content">
+        <h3>Registro de Auditoría (Logs)</h3>
+        <p>Historial de acciones realizadas en el sistema.</p>
+
+        <div class="admin-table-container" style="max-height: 400px; overflow-y: auto; text-align: left;">
+            <table style="font-size: 0.85rem;">
+                <thead>
+                <tr>
+                    <th>Fecha/Hora</th>
+                    <th>Tabla</th>
+                    <th>Acción</th>
+                    <th>Detalles (JSON)</th>
+                </tr>
+                </thead>
+                <tbody id="tabla-logs-auditoria">
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <button onclick="cerrarModal()" style="background: #64748b;">Cerrar</button>
+        </div>
+    </div>
+</div>

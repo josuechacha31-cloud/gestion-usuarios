@@ -35,6 +35,9 @@
             </div>
             <button onclick="crearPersona()">Guardar Empleado</button>
         </div>
+        <button onclick="verAuditoria()" style="background: #0f172a; margin-bottom: 20px;">
+            Ver Registros de Auditoría
+        </button>
 
         <div class="admin-table-container">
             <table id="tabla-usuarios">...</table>
@@ -46,22 +49,22 @@
 <script src="app.js"></script>
 <script>
     window.onload = () => {
-    const sessionData = sessionStorage.getItem('usuario_logueado');
-    if (!sessionData) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    const user = JSON.parse(sessionData);
-    if (!user.roles || user.roles.nombre_rol !== 'Administrador') {
-        window.location.href = 'index.html';
-    } else {
-        document.getElementById('user-name').innerText = user.nombre;
-        if (typeof listarUsuarios === 'function') {
-            listarUsuarios();
+        const sessionData = sessionStorage.getItem('usuario_logueado');
+        if (!sessionData) {
+            window.location.href = 'index.html';
+            return;
         }
-    }
-};
+
+        const user = JSON.parse(sessionData);
+        if (!user.roles || user.roles.nombre_rol !== 'Administrador') {
+            window.location.href = 'index.html';
+        } else {
+            document.getElementById('user-name').innerText = user.nombre;
+            if (typeof listarUsuarios === 'function') {
+                listarUsuarios();
+            }
+        }
+    };
 </script>
 </body>
 </html>

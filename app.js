@@ -3,6 +3,18 @@ const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 
 let supabaseClient;
 
+function verificarAcceso(rolRequerido) {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    if (!user) {
+        window.location.href = 'index.html';
+        return;
+    }
+    if (rolRequerido && user.roles.nombre_rol !== rolRequerido) {
+        Swal.fire('Acceso Restringido', 'No tienes permisos para esta sección.', 'error')
+            .then(() => window.location.href = 'index.html');
+    }
+}
+
 // Función para obtener el cliente de forma segura
 function getSupabase() {
     if (!supabaseClient) {
@@ -150,14 +162,28 @@ function logout() {
 
 async function registrarMarcacion(tipo) {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-    const {error} = await supabaseClient
-        .from('asistencias')
-        .insert([{empleado_id: user.id, tipo: tipo}]);
+    const client = getSupabase();
+
+    // Bloquear botón para evitar doble clic
+    const btn = event.target;
+    btn.disabled = true;
+
+    const {error} = await client.from('asistencias').insert([
+        {empleado_id: user.id, tipo: tipo}
+    ]);
 
     if (!error) {
-        alert("Marcación de " + tipo + " registrada");
+        Swal.fire({
+            title: `¡${tipo} Registrada!`,
+            text: `Hora: ${new Date().toLocaleTimeString()}`,
+            icon: 'success',
+            timer: 2000
+        });
         cargarMisMarcaciones(user.id);
+    } else {
+        Swal.fire('Error', 'No se pudo registrar', 'error');
     }
+    btn.disabled = false;
 }
 
 async function cargarMisMarcaciones(empleadoId) {
@@ -333,5 +359,35 @@ async function enviarSolicitud() {
     if (!error) {
         Swal.fire('Éxito', 'Solicitud enviada correctamente', 'success');
         cerrarModal();
+    }
+}
+
+async function verAuditoria() {
+    // 1. Abrimos el modal primero
+    await cargarModal('modal_auditoria');
+
+    const client = getSupabase();
+    // 2. Consultamos los últimos 50 movimientos
+    const {data, error} = await client
+        .from('auditoria')
+        .select('*')
+        .order('fecha_hora', {ascending: false})
+        .limit(50);
+
+    if (error) {
+        console.error("Error al cargar auditoría:", error);
+        return;
+    }
+
+    const tbody = document.getElementById('tabla-logs-auditoria');
+    if (tbody) {
+        tbody.innerHTML = data.map(log => `
+            <tr>
+                <td>${new Date(log.fecha_hora).toLocaleString()}</td>
+                <td><strong>${log.tabla_afectada}</strong></td>
+                <td><span class="badge ${log.accion.toLowerCase()}">${log.accion}</span></td>
+                <td><pre style="font-size: 0.7rem; margin:0;">${JSON.stringify(log.detalles, null, 2)}</pre></td>
+            </tr>
+        `).join('');
     }
 }
