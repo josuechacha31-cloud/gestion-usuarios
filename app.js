@@ -361,7 +361,7 @@ function cerrarModal() {
     }
 }
 
-// --- FUNCIONES PARA SOLICITUD DE PERMISOS (EMPLEADO) ---
+// --- FUNCIÓN PARA SOLICITAR PERMISOS  ---
 async function enviarSolicitud() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const f = document.getElementById('fecha_permiso').value;
@@ -370,17 +370,19 @@ async function enviarSolicitud() {
 
     if (!f || !h1 || !h2) return Swal.fire('Atención', 'Llene todos los campos', 'warning');
 
-    // Cálculo de horas
+    // Cálculo de diferencia de tiempo
     const inicio = new Date(`2026-01-01T${h1}`);
     const fin = new Date(`2026-01-01T${h2}`);
     const diffMs = fin - inicio;
 
     if (diffMs <= 0) return Swal.fire('Error', 'La hora de fin debe ser mayor a la de inicio', 'error');
 
-    const horasTotales = (diffMs / (1000 * 60 * 60)).toFixed(2);
-    const client = getSupabase();
 
-    // Si el empleado no tiene un jefe asignado, enviamos 'null' para no crashear la BD
+    const horas = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const formatoIntervalo = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`;
+
+    const client = getSupabase();
     const idJefe = user.jefe_id ? user.jefe_id : null;
 
     const {error} = await client
@@ -390,18 +392,18 @@ async function enviarSolicitud() {
             fecha: f,
             hora_desde: h1,
             hora_hasta: h2,
-            total_horas: `${horasTotales} horas`,
+            total_horas: formatoIntervalo,
             estado: 'Pendiente',
             jefe_id: idJefe
         }]);
 
     if (error) {
         console.error("❌ Error BD Permisos:", error);
-        Swal.fire('Error de Base de Datos', error.message, 'error');
+        Swal.fire('Error de BD', error.message, 'error');
     } else {
-        Swal.fire('Éxito', 'Solicitud de permiso enviada', 'success');
+        Swal.fire('Éxito', 'Solicitud enviada correctamente', 'success');
         cerrarModal();
-        cargarMisPermisos(); // Actualiza la tabla inmediatamente
+        cargarMisPermisos();
     }
 }
 
@@ -574,12 +576,12 @@ async function actualizarPersona(id) {
     }
 }
 
-// 1. Cargar permisos pendientes para el Jefe
+// --- FUNCIÓN PARA VER PERMISOS (PANEL JEFE) ---
 async function cargarPermisosJefe() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const client = getSupabase();
 
-    // Traemos permisos cuyo jefe_id sea el del usuario logueado y estén 'Pendientes'
+    // Usamos personas!inner para cruzar obligatoriamente los datos
     const {data, error} = await client
         .from('permisos')
         .select(`
@@ -588,13 +590,20 @@ async function cargarPermisosJefe() {
             hora_desde, 
             hora_hasta, 
             total_horas, 
-            personas!empleado_id (nombre, apellido)
+            personas!inner (nombre, apellido)
         `)
         .eq('jefe_id', user.id)
         .eq('estado', 'Pendiente');
 
     const tbody = document.getElementById('lista-permisos');
     if (!tbody) return;
+
+    // Detector de errores
+    if (error) {
+        console.error("❌ Error en permisos del jefe:", error.message);
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #ef4444;">Error de BD. Revisa la consola.</td></tr>`;
+        return;
+    }
 
     if (data && data.length > 0) {
         tbody.innerHTML = data.map(p => `
@@ -612,7 +621,7 @@ async function cargarPermisosJefe() {
             </tr>
         `).join('');
     } else {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay solicitudes pendientes</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay solicitudes pendientes de tu equipo.</td></tr>';
     }
 }
 
@@ -681,19 +690,17 @@ async function cargarAsistenciasEquipo() {
     }
 }
 
-// --- 1. FUNCIÓN PARA LEER LOS LOGS ---
+// --- 1. FUNCIÓN PARA LEER LOS LOGS (CON FECHAS Y TEXTOS EN ESPAÑOL) ---
 async function verAuditoria() {
     await cargarModal('modal_auditoria');
     const client = getSupabase();
 
-    // Consultamos la auditoría y cruzamos con la tabla personas
     const {data, error} = await client
         .from('auditoria')
         .select('*, personas(nombre, apellido)')
         .order('fecha_hora', {ascending: false})
         .limit(50);
 
-    // ¡NUEVO!: Si hay un error en la BD, te lo mostrará en pantalla
     if (error) {
         console.error("Error detallado de Supabase:", error);
         Swal.fire('Error de Base de Datos', 'No se pudieron cargar los logs: ' + error.message, 'error');
@@ -705,18 +712,36 @@ async function verAuditoria() {
         if (data && data.length > 0) {
             tbody.innerHTML = data.map(log => {
                 const responsable = log.personas ? `${log.personas.nombre} ${log.personas.apellido}` : 'Sistema / Desconocido';
+
+                // 1. Limpiar y formatear la fecha a formato local (DD/MM/YYYY, HH:MM:SS)
+                const fechaObj = new Date(log.fecha_hora);
+                const fechaLimpia = fechaObj.toLocaleString('es-EC', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false // Cambia a true si prefieres formato AM/PM
+                });
+
+                // 2. Traducir la acción al español para la vista
+                let accionEspanol = log.accion;
+                if (log.accion === 'INSERT') accionEspanol = 'CREACIÓN';
+                if (log.accion === 'UPDATE') accionEspanol = 'MODIFICACIÓN';
+                if (log.accion === 'DELETE') accionEspanol = 'ELIMINACIÓN';
+
                 return `
                 <tr>
-                    <td>${log.fecha_hora}</td>
+                    <td>${fechaLimpia}</td>
                     <td><strong>${responsable}</strong></td>
                     <td><strong>${log.tabla_afectada}</strong></td>
-                    <td><span class="badge ${log.accion.toLowerCase()}">${log.accion}</span></td>
+                    <td><span class="badge ${log.accion.toLowerCase()}">${accionEspanol}</span></td>
                     <td><pre>${JSON.stringify(log.detalles, null, 2)}</pre></td>
                 </tr>
             `
             }).join('');
         } else {
-            // Si no hay datos, muestra este mensaje en lugar de quedarse en blanco
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">No hay registros de auditoría todavía.</td></tr>';
         }
     }
