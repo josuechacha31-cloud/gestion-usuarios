@@ -575,31 +575,41 @@ async function cargarAsistenciasEquipo() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const client = getSupabase();
 
-    // Consultamos asistencias de personas que tienen a este usuario como su jefe_id
+    if (!user) return;
+
+    // Usamos personas!inner para forzar a Supabase a filtrar por el jefe_id
     const {data, error} = await client
         .from('asistencias')
         .select(`
             tipo, 
             fecha_hora, 
-            personas!empleado_id (nombre, apellido, jefe_id)
+            personas!inner (nombre, apellido, jefe_id)
         `)
-        .eq('personas.jefe_id', user.id) // Solo gente a mi cargo
+        .eq('personas.jefe_id', user.id) // Ahora este filtro sí funcionará
         .order('fecha_hora', {ascending: false})
-        .limit(10); // Solo las últimas 10 para no saturar
+        .limit(10);
 
     const tbody = document.getElementById('lista-asistencias-equipo');
     if (!tbody) return;
 
+    // Si hay un error de base de datos, te lo muestra en la consola (F12)
+    if (error) {
+        console.error("❌ Error de Supabase al cargar marcaciones:", error.message);
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: #ef4444;">Error de BD. Revisa la consola (F12).</td></tr>`;
+        return;
+    }
+
+    // Dibujamos la tabla si hay datos
     if (data && data.length > 0) {
         tbody.innerHTML = data.map(m => `
             <tr>
                 <td>${m.personas.nombre} ${m.personas.apellido}</td>
                 <td><span class="badge ${m.tipo.toLowerCase()}">${m.tipo}</span></td>
-                <td>${new Date(m.fecha_hora).toLocaleString()}</td>
+                <td>${m.fecha_hora}</td>
             </tr>
         `).join('');
     } else {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin marcaciones recientes.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 15px;">Sin marcaciones recientes de tu equipo.</td></tr>';
     }
 }
 
