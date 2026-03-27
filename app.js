@@ -722,7 +722,7 @@ async function verAuditoria() {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
-                    hour12: false // Cambia a true si prefieres formato AM/PM
+                    hour12: true
                 });
 
                 // 2. Traducir la acción al español para la vista
