@@ -102,37 +102,53 @@ async function listarUsuarios() {
     }
 }
 
-// Función para crear personas (Empresa X)
 async function crearPersona() {
     const client = getSupabase();
+    if (!client) return;
 
-    // Capturamos los datos del formulario
-    const nuevaPersona = {
-        nombre: document.getElementById('new-name').value,
-        apellido: document.getElementById('new-lastname').value,
-        cedula: document.getElementById('new-cedula').value,
-        email: document.getElementById('new-email').value,
-        password: document.getElementById('new-password').value,
-        celular: document.getElementById('new-phone').value,
-        cargo: document.getElementById('new-cargo').value,
-        remuneracion: parseFloat(document.getElementById('new-salary').value) || 0,
-        rol_id: parseInt(document.getElementById('new-role').value)
-    };
+    // Capturamos los datos con los IDs correctos del nuevo modal
+    const nombre = document.getElementById('new-name')?.value;
+    const apellido = document.getElementById('new-lastname')?.value;
+    const cedula = document.getElementById('new-cedula')?.value;
+    const email = document.getElementById('new-email')?.value;
+    const password = document.getElementById('new-password')?.value;
+    const celular = document.getElementById('new-phone')?.value;
+    const cargo = document.getElementById('new-cargo')?.value;
+    const remuneracion = document.getElementById('new-salary')?.value; // Verifica que este ID exista en el HTML
+    const rol_id = document.getElementById('new-role')?.value;
+    const direccion = document.getElementById('new-address')?.value;
 
-    // Validación simple
-    if (!nuevaPersona.nombre || !nuevaPersona.email || !nuevaPersona.cedula) {
-        return Swal.fire('Error', 'Nombre, Cédula y Correo son obligatorios', 'error');
+    // Validación de campos obligatorios para la Empresa "X"
+    if (!nombre || !apellido || !cedula || !email || !password || !rol_id) {
+        return Swal.fire('Campos Incompletos', 'Por favor, llene todos los campos marcados con (*)', 'warning');
     }
+
+    const nuevaPersona = {
+        nombre: nombre,
+        apellido: apellido,
+        cedula: cedula,
+        email: email,
+        password: password,
+        celular: celular,
+        cargo: cargo,
+        remuneracion: parseFloat(remuneracion) || 0,
+        rol_id: parseInt(rol_id),
+        direccion: direccion
+    };
 
     const {error} = await client.from('personas').insert([nuevaPersona]);
 
     if (error) {
-        Swal.fire('Error de Registro', error.message, 'error');
+        Swal.fire('Error de Registro', 'No se pudo guardar: ' + error.message, 'error');
     } else {
-        Swal.fire('¡Éxito!', 'Empleado registrado en la Empresa X', 'success');
-        listarUsuarios(); // Recargamos la tabla automáticamente
-        // Limpiar campos
-        document.querySelectorAll('.grid-form input').forEach(i => i.value = '');
+        await Swal.fire({
+            icon: 'success',
+            title: '¡Empleado Registrado!',
+            text: 'El nuevo integrante ha sido añadido a la Empresa "X".',
+            timer: 2000
+        });
+        cerrarModal();
+        listarUsuarios(); // Refresca la tabla del dashboard
     }
 }
 
