@@ -472,7 +472,6 @@ async function inactivarUsuario(id) {
 // --- FUNCIONES DEL DASHBOARD ADMINISTRADOR ---
 
 // 1. Abrir el modal de creación
-// --- FUNCIÓN PARA ABRIR MODAL DE EDICIÓN (BLINDADA) ---
 async function abrirModalEditar(usuario) {
     await cargarModal('modal_crear_empleado');
     await cargarListaJefes();
