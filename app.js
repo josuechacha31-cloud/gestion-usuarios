@@ -381,14 +381,26 @@ async function enviarSolicitud() {
 
     if (diffMs <= 0) return Swal.fire('Error', 'La hora de fin debe ser mayor a la de inicio', 'error');
 
-
     const horas = Math.floor(diffMs / (1000 * 60 * 60));
     const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     const formatoIntervalo = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`;
 
     const client = getSupabase();
-    const idJefe = user.jefe_id ? user.jefe_id : null;
+    
+    const {data: dataEmpleado} = await client
+        .from('personas')
+        .select('jefe_id')
+        .eq('id', user.id)
+        .single();
 
+    const idJefe = (dataEmpleado && dataEmpleado.jefe_id) ? dataEmpleado.jefe_id : null;
+
+    // Si el empleado es huérfano (no tiene jefe asignado por el admin), le bloqueamos el permiso
+    if (!idJefe) {
+        return Swal.fire('Sin asignación', 'Aún no tienes un Jefe de Área asignado en el sistema para aprobar esto. Contacta al Administrador.', 'warning');
+    }
+
+    // Si todo está bien, mandamos el permiso con el idJefe correcto
     const {error} = await client
         .from('permisos')
         .insert([{
