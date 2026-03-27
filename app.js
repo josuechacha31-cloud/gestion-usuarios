@@ -458,7 +458,6 @@ document.addEventListener('click', function (e) {
         const esOculto = passwordInput.getAttribute('type') === 'password';
 
         passwordInput.setAttribute('type', esOculto ? 'text' : 'password');
-        // Icono: Si está oculto, muestra el ojo (para ver). Si se ve, el mono (privacidad).
         e.target.textContent = esOculto ? '😮' : '🙈';
     }
 });

@@ -10,8 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="admin-body">
+
 <div class="dashboard-container">
-    <header class="admin-header-compact card">
+    <header class="admin-header-compact">
         <div class="logo-area">
             <img src="favicon.ico" alt="Logo" class="header-logo">
             <div class="title-text">
@@ -24,18 +25,10 @@
                 <span class="user-name" id="admin-name">Cargando...</span>
                 <span class="user-role">Administrador</span>
             </div>
-            <button onclick="cerrarSesion()" class="btn-logout-icon">Salir 🚪</button>
+            <button onclick="cerrarSesion()" class="btn-logout-modern">Salir 🚪</button>
         </div>
     </header>
 
-    <div class="action-bar card">
-    </div>
-
-    <div class="admin-table-container card">
-    </div>
-</div>
-
-<div class="dashboard-container">
     <div class="action-bar card">
         <div class="search-group">
             <span class="search-icon">🔍</span>
@@ -70,12 +63,11 @@
 
 <script src="app.js"></script>
 <script>
-    // Carga inicial al abrir el panel
     window.onload = function () {
-        verificarAcceso('Administrador'); // Seguridad RBAC
+        verificarAcceso('Administrador');
         const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
         if (user) document.getElementById('admin-name').innerText = `${user.nombre} ${user.apellido}`;
-        listarUsuarios(); // Carga la tabla
+        listarUsuarios();
     };
 </script>
 </body>

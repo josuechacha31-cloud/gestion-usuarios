@@ -208,12 +208,10 @@ pre {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
-    margin-bottom: 1.5rem; /* Espacio con el buscador */
-    background-color: var(--header-bg) !important; /* El azul marino que te gusta */
+    background-color: #0f172a; /* Azul marino profundo */
     color: white;
     border-radius: 12px;
-    width: 100%; /* Ocupa el 100% del contenedor padre */
-    box-sizing: border-box;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .admin-header-compact h1 {
@@ -223,8 +221,8 @@ pre {
 }
 
 .admin-header-compact .subnet {
-    color: var(--text-muted);
-    font-size: 0.8rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
 }
 
 .header-container {
@@ -356,12 +354,12 @@ pre {
 
 /* --- CONTENIDO PRINCIPAL --- */
 .dashboard-container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 2rem auto;
-    padding: 0 20px;
+    padding: 0 1rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 /* Barra de Acciones */
@@ -717,22 +715,17 @@ pre {
 }
 
 .btn-logout-modern {
-    background-color: var(--danger-modern);
+    background-color: #ef4444;
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 8px 16px;
     border-radius: 6px;
     font-weight: 600;
-    font-size: 0.8rem;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.2s;
+    transition: background 0.2s;
 }
 
 .btn-logout-modern:hover {
-    transform: scale(1.05);
     background-color: #dc2626;
 }
 
