@@ -312,9 +312,12 @@ async function cargarModal(nombreArchivo) {
     }
 }
 
+// Función segura para cerrar cualquier modal
 function cerrarModal() {
-    const m = document.getElementById('contenedor-modal');
-    if (m) m.remove();
+    const contenedorOscuro = document.getElementById('contenedor-modal');
+    if (contenedorOscuro) {
+        contenedorOscuro.remove();
+    }
 }
 
 async function enviarSolicitud() {

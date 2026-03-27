@@ -1,27 +1,26 @@
-<div id="modal-auditoria" class="modal-overlay">
-    <div class="card modal-content" style="max-width: 950px; width: 95%;">
-        <div class="modal-header"
-             style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
-            <h3 style="margin: 0;">Registro de Auditoría (Logs)</h3>
-            <button onclick="cerrarModal()" class="btn-close-modal">×</button>
-        </div>
+<div class="card modal-content" style="max-width: 950px; width: 95%; margin: auto;">
 
-        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Historial de acciones de seguridad y cambios
-            en la BD.</p>
+    <div class="modal-header"
+         style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
+        <h3 style="margin: 0;">Registro de Auditoría (Logs)</h3>
+        <button onclick="cerrarModal()" class="btn-close-modal">×</button>
+    </div>
 
-        <div class="admin-table-container" style="max-height: 60vh; overflow-y: auto; text-align: left; margin: 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                <tr>
-                    <th style="width: 15%;">Fecha/Hora</th>
-                    <th style="width: 15%;">Tabla</th>
-                    <th style="width: 10%;">Acción</th>
-                    <th style="width: 60%;">Detalles (JSON)</th>
-                </tr>
-                </thead>
-                <tbody id="tabla-logs-auditoria">
-                </tbody>
-            </table>
-        </div>
+    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Historial de acciones de seguridad y cambios en
+        la BD.</p>
+
+    <div class="admin-table-container" style="max-height: 60vh; overflow-y: auto; text-align: left; margin: 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+            <tr>
+                <th style="width: 15%;">Fecha/Hora</th>
+                <th style="width: 15%;">Tabla</th>
+                <th style="width: 10%;">Acción</th>
+                <th style="width: 60%;">Detalles (JSON)</th>
+            </tr>
+            </thead>
+            <tbody id="tabla-logs-auditoria">
+            </tbody>
+        </table>
     </div>
 </div>
