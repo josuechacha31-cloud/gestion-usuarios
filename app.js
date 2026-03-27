@@ -251,6 +251,37 @@ async function actualizarDatos() {
     }
 }
 
+// --- FUNCIÓN PARA LISTAR LAS MARCACIONES DEL EMPLEADO ---
+async function listarAsistenciasEmpleado() {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    const client = getSupabase();
+
+    const {data, error} = await client
+        .from('asistencias')
+        .select('*')
+        .eq('empleado_id', user.id)
+        .order('fecha_hora', {ascending: false});
+
+    if (error) {
+        console.error("Error al cargar marcaciones:", error.message);
+        return;
+    }
+
+    const tbody = document.getElementById('tabla-asistencias');
+    if (tbody && data) {
+        if (data.length > 0) {
+            tbody.innerHTML = data.map(m => `
+                <tr>
+                    <td><span class="badge ${m.tipo.toLowerCase()}">${m.tipo}</span></td>
+                    <td>${m.fecha_hora}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 15px;">No tienes marcaciones aún.</td></tr>';
+        }
+    }
+}
+
 // Función para registrar entrada o salida
 async function registrarMarcacion(tipo) {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
@@ -330,24 +361,28 @@ function cerrarModal() {
     }
 }
 
+// --- FUNCIONES PARA SOLICITUD DE PERMISOS (EMPLEADO) ---
 async function enviarSolicitud() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const f = document.getElementById('fecha_permiso').value;
     const h1 = document.getElementById('hora_desde').value;
     const h2 = document.getElementById('hora_hasta').value;
 
-    if (!f || !h1 || !h2) return Swal.fire('Error', 'Llene todos los campos', 'error');
+    if (!f || !h1 || !h2) return Swal.fire('Atención', 'Llene todos los campos', 'warning');
 
-    // Cálculo de diferencia (Lógica pura JS)
+    // Cálculo de horas
     const inicio = new Date(`2026-01-01T${h1}`);
     const fin = new Date(`2026-01-01T${h2}`);
     const diffMs = fin - inicio;
 
-    if (diffMs <= 0) return Swal.fire('Error', 'La hora de fin debe ser mayor', 'error');
+    if (diffMs <= 0) return Swal.fire('Error', 'La hora de fin debe ser mayor a la de inicio', 'error');
 
     const horasTotales = (diffMs / (1000 * 60 * 60)).toFixed(2);
-
     const client = getSupabase();
+
+    // Si el empleado no tiene un jefe asignado, enviamos 'null' para no crashear la BD
+    const idJefe = user.jefe_id ? user.jefe_id : null;
+
     const {error} = await client
         .from('permisos')
         .insert([{
@@ -357,12 +392,45 @@ async function enviarSolicitud() {
             hora_hasta: h2,
             total_horas: `${horasTotales} horas`,
             estado: 'Pendiente',
-            jefe_id: user.jefe_id
+            jefe_id: idJefe
         }]);
 
-    if (!error) {
-        Swal.fire('Éxito', 'Solicitud enviada correctamente', 'success');
+    if (error) {
+        console.error("❌ Error BD Permisos:", error);
+        Swal.fire('Error de Base de Datos', error.message, 'error');
+    } else {
+        Swal.fire('Éxito', 'Solicitud de permiso enviada', 'success');
         cerrarModal();
+        cargarMisPermisos(); // Actualiza la tabla inmediatamente
+    }
+}
+
+// --- FUNCIÓN PARA VER LA LISTA DE PERMISOS ---
+async function cargarMisPermisos() {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    const client = getSupabase();
+
+    const {data, error} = await client
+        .from('permisos')
+        .select('fecha, estado')
+        .eq('empleado_id', user.id)
+        .order('fecha', {ascending: false});
+
+    const tbody = document.getElementById('lista-permisos-usuario');
+    if (tbody && data) {
+        if (data.length > 0) {
+            tbody.innerHTML = data.map(p => {
+                let badgeClass = p.estado === 'Aprobado' ? 'entrada' : (p.estado === 'Rechazado' ? 'delete' : 'update');
+                return `
+                    <tr>
+                        <td>${p.fecha}</td>
+                        <td><span class="badge ${badgeClass}">${p.estado}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 15px;">Sin permisos solicitados.</td></tr>';
+        }
     }
 }
 

@@ -92,7 +92,9 @@
         if (user) {
             document.getElementById('emp-name').innerText = `${user.nombre} ${user.apellido}`;
             document.getElementById('emp-cargo').innerText = user.cargo || 'Colaborador';
+
             listarAsistenciasEmpleado();
+            cargarMisPermisos(); // ¡Añadimos esta nueva función aquí!
         }
     };
 </script>
