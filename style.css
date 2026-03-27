@@ -755,3 +755,17 @@ pre {
     background-color: #dcfce7;
     color: #166534;
 }
+
+.btn-approve {
+    background-color: #10b981 !important; /* Verde Esmeralda */
+    color: white;
+    width: 35px !important;
+    height: 35px;
+    padding: 0 !important;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-approve:hover {
+    background-color: #059669 !important;
+}

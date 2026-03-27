@@ -505,3 +505,67 @@ async function actualizarPersona(id) {
         Swal.fire('Error', error.message, 'error');
     }
 }
+
+// 1. Cargar permisos pendientes para el Jefe
+async function cargarPermisosJefe() {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    const client = getSupabase();
+
+    // Traemos permisos cuyo jefe_id sea el del usuario logueado y estén 'Pendientes'
+    const {data, error} = await client
+        .from('permisos')
+        .select(`
+            id, 
+            fecha, 
+            hora_desde, 
+            hora_hasta, 
+            total_horas, 
+            personas!empleado_id (nombre, apellido)
+        `)
+        .eq('jefe_id', user.id)
+        .eq('estado', 'Pendiente');
+
+    const tbody = document.getElementById('lista-permisos');
+    if (!tbody) return;
+
+    if (data && data.length > 0) {
+        tbody.innerHTML = data.map(p => `
+            <tr>
+                <td>${p.personas.nombre} ${p.personas.apellido}</td>
+                <td>${p.fecha}</td>
+                <td>${p.hora_desde} - ${p.hora_hasta}</td>
+                <td><strong>${p.total_horas}</strong></td>
+                <td>
+                    <div class="action-buttons">
+                        <button onclick="responderPermiso('${p.id}', 'Aprobado')" class="btn-approve">✅</button>
+                        <button onclick="responderPermiso('${p.id}', 'Rechazado')" class="btn-delete">❌</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay solicitudes pendientes</td></tr>';
+    }
+}
+
+// 2. Función para Aprobar o Rechazar
+async function responderPermiso(idPermiso, nuevoEstado) {
+    const client = getSupabase();
+
+    const {error} = await client
+        .from('permisos')
+        .update({estado: nuevoEstado})
+        .eq('id', idPermiso);
+
+    if (!error) {
+        Swal.fire({
+            title: `Solicitud ${nuevoEstado}`,
+            icon: nuevoEstado === 'Aprobado' ? 'success' : 'info',
+            timer: 1500,
+            showConfirmButton: false
+        });
+        cargarPermisosJefe(); // Recargamos la lista
+    } else {
+        Swal.fire('Error', 'No se pudo procesar la solicitud', 'error');
+    }
+}
