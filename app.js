@@ -87,24 +87,25 @@ async function listarUsuarios() {
         setTimeout(listarUsuarios, 200);
         return;
     }
+
     const {data, error} = await client
         .from('personas')
-        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol)');
-    if (error) {
-        console.error("Error de Supabase:", error.message);
-        return;
-    }
+        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol), password');
+
     const tbody = document.getElementById('cuerpo-tabla');
-    if (tbody) {
+    if (tbody && data) {
         tbody.innerHTML = data.map(u => `
-            <tr>
+            <tr class="table-row">
                 <td>${u.nombre} ${u.apellido}</td>
                 <td>${u.cedula}</td>
                 <td>${u.email}</td>
                 <td>${u.cargo || 'N/A'}</td>
-                <td><span class="badge">${u.roles?.nombre_rol || 'Usuario'}</span></td>
+                <td><span class="badge ${u.roles.nombre_rol.toLowerCase()}">${u.roles.nombre_rol}</span></td>
                 <td>
-                    <button onclick="eliminarUsuario('${u.id}')" style="background:red; width:auto; padding:5px; color:white; border-radius:4px;">Eliminar</button>
+                    <div class="action-buttons">
+                        <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit">✏️</button>
+                        <button onclick="eliminarUsuario('${u.id}')" class="btn-delete">🗑️</button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -455,10 +456,52 @@ function logout() {
 document.addEventListener('click', function (e) {
     if (e.target && e.target.id === 'toggle-password') {
         const passwordInput = document.getElementById('password');
-        if (passwordInput) {
-            const isPassword = passwordInput.getAttribute('type') === 'password';
-            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
-            e.target.textContent = isPassword ? '😮' : '️️🙈';
-        }
+        const esOculto = passwordInput.getAttribute('type') === 'password';
+
+        passwordInput.setAttribute('type', esOculto ? 'text' : 'password');
+        // Icono: Si está oculto, muestra el ojo (para ver). Si se ve, el mono (privacidad).
+        e.target.textContent = esOculto ? '🙈' : '😮';
     }
 });
+
+async function abrirModalEditar(usuario) {
+    await cargarModal('modal_crear_empleado');
+
+    // Cambiamos el título del modal
+    document.querySelector('.modal-header h3').innerText = "Editar Empleado";
+
+    // Cambiamos el botón de guardar
+    const btnGuardar = document.querySelector('.modal-footer .btn-primary');
+    btnGuardar.innerText = "💾 Actualizar Datos";
+    btnGuardar.onclick = () => actualizarPersona(usuario.id);
+
+    // Llenamos los campos
+    document.getElementById('new-name').value = usuario.nombre;
+    document.getElementById('new-lastname').value = usuario.apellido;
+    document.getElementById('new-cedula').value = usuario.cedula;
+    document.getElementById('new-email').value = usuario.email;
+    document.getElementById('new-password').value = usuario.password;
+    document.getElementById('new-cargo').value = usuario.cargo || '';
+    document.getElementById('new-role').value = (usuario.roles.nombre_rol === 'Administrador') ? 1 : (usuario.roles.nombre_rol === 'Empleado' ? 2 : 3);
+}
+
+async function actualizarPersona(id) {
+    const client = getSupabase();
+    const datosActualizados = {
+        nombre: document.getElementById('new-name').value,
+        apellido: document.getElementById('new-lastname').value,
+        email: document.getElementById('new-email').value,
+        password: document.getElementById('new-password').value,
+        cargo: document.getElementById('new-cargo').value
+    };
+
+    const {error} = await client.from('personas').update(datosActualizados).eq('id', id);
+
+    if (!error) {
+        Swal.fire('Éxito', 'Usuario actualizado correctamente', 'success');
+        cerrarModal();
+        listarUsuarios();
+    } else {
+        Swal.fire('Error', error.message, 'error');
+    }
+}
