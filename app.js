@@ -92,7 +92,7 @@ async function listarUsuarios() {
     // Aseguramos pedir el campo 'activo'
     const {data, error} = await client
         .from('personas')
-        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol), password, activo')
+        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol), password, activo, jefe_id')
         .order('nombre', {ascending: true});
 
     const tbody = document.getElementById('cuerpo-tabla');
@@ -142,6 +142,7 @@ async function crearPersona() {
     const remuneracion = document.getElementById('new-salary')?.value; // Verifica que este ID exista en el HTML
     const rol_id = document.getElementById('new-role')?.value;
     const direccion = document.getElementById('new-address')?.value;
+    const valorJefe = document.getElementById('new-jefe').value;
 
     // Validación de campos obligatorios para la Empresa "X"
     if (!nombre || !apellido || !cedula || !email || !password || !rol_id) {
@@ -158,7 +159,8 @@ async function crearPersona() {
         cargo: cargo,
         remuneracion: parseFloat(remuneracion) || 0,
         rol_id: parseInt(rol_id),
-        direccion: direccion
+        direccion: direccion,
+        jefe_id: valorJefe ? valorJefe : null
     };
 
     const {error} = await client.from('personas').insert([nuevaPersona]);
@@ -470,6 +472,7 @@ async function inactivarUsuario(id) {
 // 1. Abrir el modal de creación
 async function abrirModalCrear() {
     await cargarModal('modal_crear_empleado');
+    await cargarListaJefes();
 }
 
 // 2. Buscador en Tiempo Real (Filtro de tabla)
@@ -530,16 +533,13 @@ document.addEventListener('click', function (e) {
 
 async function abrirModalEditar(usuario) {
     await cargarModal('modal_crear_empleado');
+    await cargarListaJefes();
 
-    // Cambiamos el título del modal
     document.querySelector('.modal-header h3').innerText = "Editar Empleado";
-
-    // Cambiamos el botón de guardar
     const btnGuardar = document.querySelector('.modal-footer .btn-primary');
     btnGuardar.innerText = "💾 Actualizar Datos";
     btnGuardar.onclick = () => actualizarPersona(usuario.id);
 
-    // Llenamos los campos
     document.getElementById('new-name').value = usuario.nombre;
     document.getElementById('new-lastname').value = usuario.apellido;
     document.getElementById('new-cedula').value = usuario.cedula;
@@ -547,11 +547,18 @@ async function abrirModalEditar(usuario) {
     document.getElementById('new-password').value = usuario.password;
     document.getElementById('new-cargo').value = usuario.cargo || '';
     document.getElementById('new-role').value = (usuario.roles.nombre_rol === 'Administrador') ? 1 : (usuario.roles.nombre_rol === 'Empleado' ? 2 : 3);
+
+    // NUEVO: Dejar seleccionado a su jefe actual
+    if (usuario.jefe_id) {
+        document.getElementById('new-jefe').value = usuario.jefe_id;
+    } else {
+        document.getElementById('new-jefe').value = "";
+    }
 }
 
 async function actualizarPersona(id) {
     const client = getSupabase();
-
+    const valorJefe = document.getElementById('new-jefe').value;
     const datos = {
         nombre: document.getElementById('new-name').value,
         apellido: document.getElementById('new-lastname').value,
@@ -560,7 +567,8 @@ async function actualizarPersona(id) {
         password: document.getElementById('new-password').value,
         cargo: document.getElementById('new-cargo').value,
         remuneracion: parseFloat(document.getElementById('new-salary').value) || 0,
-        rol_id: parseInt(document.getElementById('new-role').value)
+        rol_id: parseInt(document.getElementById('new-role').value),
+        jefe_id: valorJefe ? valorJefe : null
     };
 
     const {error} = await client.from('personas').update(datos).eq('id', id);
@@ -577,11 +585,12 @@ async function actualizarPersona(id) {
 }
 
 // --- FUNCIÓN PARA VER PERMISOS (PANEL JEFE) ---
+// --- FUNCIÓN PARA VER PERMISOS (CORREGIDA LA AMBIGÜEDAD DE LLAVES FORÁNEAS) ---
 async function cargarPermisosJefe() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const client = getSupabase();
 
-    // Usamos personas!inner para cruzar obligatoriamente los datos
+    // Le decimos a Supabase que use explícitamente la llave foránea '!empleado_id'
     const {data, error} = await client
         .from('permisos')
         .select(`
@@ -590,7 +599,7 @@ async function cargarPermisosJefe() {
             hora_desde, 
             hora_hasta, 
             total_horas, 
-            personas!inner (nombre, apellido)
+            personas!empleado_id (nombre, apellido)
         `)
         .eq('jefe_id', user.id)
         .eq('estado', 'Pendiente');
@@ -598,10 +607,9 @@ async function cargarPermisosJefe() {
     const tbody = document.getElementById('lista-permisos');
     if (!tbody) return;
 
-    // Detector de errores
     if (error) {
         console.error("❌ Error en permisos del jefe:", error.message);
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #ef4444;">Error de BD. Revisa la consola.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #ef4444;">Error de BD: ${error.message}</td></tr>`;
         return;
     }
 
@@ -614,14 +622,14 @@ async function cargarPermisosJefe() {
                 <td><strong>${p.total_horas}</strong></td>
                 <td>
                     <div class="action-buttons">
-                        <button onclick="responderPermiso('${p.id}', 'Aprobado')" class="btn-approve">✅</button>
-                        <button onclick="responderPermiso('${p.id}', 'Rechazado')" class="btn-delete">❌</button>
+                        <button onclick="responderPermiso('${p.id}', 'Aprobado')" class="btn-approve" title="Aprobar">✅</button>
+                        <button onclick="responderPermiso('${p.id}', 'Rechazado')" class="btn-delete" title="Rechazar">❌</button>
                     </div>
                 </td>
             </tr>
         `).join('');
     } else {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay solicitudes pendientes de tu equipo.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 15px;">No hay solicitudes pendientes de tu equipo.</td></tr>';
     }
 }
 
@@ -722,7 +730,7 @@ async function verAuditoria() {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
-                    hour12: true
+                    hour12: false
                 });
 
                 // 2. Traducir la acción al español para la vista
@@ -805,6 +813,29 @@ async function activarUsuario(id) {
 
             await Swal.fire('Usuario Activado', 'El usuario ya puede ingresar a la Empresa "X".', 'success');
             listarUsuarios();
+        }
+    }
+}
+
+// --- FUNCIÓN PARA LLENAR EL SELECT DE JEFES ---
+async function cargarListaJefes() {
+    const client = getSupabase();
+
+    // Buscamos solo a los que tienen rol_id = 3 (Jefes) y que estén activos
+    const {data, error} = await client
+        .from('personas')
+        .select('id, nombre, apellido')
+        .eq('rol_id', 3)
+        .eq('activo', true);
+
+    const selectJefe = document.getElementById('new-jefe');
+    if (selectJefe) {
+        selectJefe.innerHTML = '<option value="">Ninguno / Sin Jefe</option>'; // Opción por defecto
+
+        if (data && !error) {
+            data.forEach(jefe => {
+                selectJefe.innerHTML += `<option value="${jefe.id}">${jefe.nombre} ${jefe.apellido}</option>`;
+            });
         }
     }
 }
