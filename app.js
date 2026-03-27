@@ -425,3 +425,37 @@ async function eliminarUsuario(id) {
         }
     }
 }
+
+// --- FUNCIONES DEL DASHBOARD ADMINISTRADOR ---
+
+// 1. Abrir el modal de creación
+async function abrirModalCrear() {
+    await cargarModal('modal_crear_empleado');
+}
+
+// 2. Buscador en Tiempo Real (Filtro de tabla)
+function filtrarUsuarios() {
+    const input = document.getElementById('buscador-usuarios');
+    const filter = input.value.toLowerCase();
+    const tbody = document.getElementById('cuerpo-tabla');
+    const rows = tbody.getElementsByTagName('tr');
+
+    for (let i = 0; i < rows.length; i++) {
+        // Obtenemos el texto de las columnas Nombre, Cédula y Correo
+        const nameCell = rows[i].getElementsByTagName('td')[0];
+        const cedulaCell = rows[i].getElementsByTagName('td')[1];
+        const emailCell = rows[i].getElementsByTagName('td')[2];
+
+        if (nameCell || cedulaCell || emailCell) {
+            const txtValue = (nameCell.textContent || nameCell.innerText) + ' ' +
+                (cedulaCell.textContent || cedulaCell.innerText) + ' ' +
+                (emailCell.textContent || emailCell.innerText);
+
+            if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                rows[i].style.display = ""; // Muestra la fila
+            } else {
+                rows[i].style.display = "none"; // Oculta la fila
+            }
+        }
+    }
+}

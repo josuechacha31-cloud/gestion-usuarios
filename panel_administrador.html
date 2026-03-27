@@ -2,82 +2,71 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Administrativo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador - Empresa "X"</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-<div class="container dash-container">
-    <div class="card admin-header">
-        <h1>Panel Administrativo</h1>
-        <p>Bienvenido, <span id="user-name"></span></p>
+<body class="admin-body">
 
-
-        <div class="admin-form">
-            <h3>Registrar Nuevo Empleado</h3>
-            <div class="grid-form">
-                <input type="text" id="new-name" placeholder="Nombres">
-                <input type="text" id="new-lastname" placeholder="Apellidos">
-                <input type="text" id="new-cedula" placeholder="Cédula (ID)">
-                <input type="email" id="new-email" placeholder="Correo electrónico">
-                <input type="password" id="new-password" placeholder="Contraseña temporal">
-                <input type="text" id="new-phone" placeholder="Celular">
-                <input type="text" id="new-cargo" placeholder="Cargo">
-                <input type="number" id="new-salary" placeholder="Remuneración ($)">
-
-                <label>Rol del Usuario:</label>
-                <select id="new-role">
-                    <option value="1">Administrador</option>
-                    <option value="2" selected>Empleado</option>
-                    <option value="3">Jefe</option>
-                </select>
-            </div>
-            <button onclick="crearPersona()">Guardar Empleado</button>
+<header class="admin-header">
+    <div class="header-container">
+        <div class="logo-area">
+            <img src="favicon.ico" alt="Logo" class="header-logo">
+            <h1>Empresa "X" <span class="subnet">| Panel Control</span></h1>
         </div>
-        <button onclick="verAuditoria()" style="background: #0f172a; margin-bottom: 20px;">
-            Ver Registros de Auditoría
-        </button>
-
-        <div class="admin-table-container">
-            <h3>Listado de Personal - Empresa "X"</h3>
-            <table id="tabla-usuarios">
-                <thead>
-                <tr>
-                    <th>Nombre Completo</th>
-                    <th>Cédula</th>
-                    <th>Correo</th>
-                    <th>Cargo</th>
-                    <th>Rol</th>
-                    <th>Acciones</th>
-                </tr>
-                </thead>
-                <tbody id="cuerpo-tabla">
-                </tbody>
-            </table>
+        <div class="user-area">
+            <span id="admin-name">Administrador</span>
+            <button onclick="cerrarSesion()" class="btn-logout">Cerrar Sesión</button>
         </div>
+    </div>
+</header>
 
-        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+<div class="dashboard-container">
+
+    <div class="action-bar card">
+        <div class="search-group">
+            <input type="text" id="buscador-usuarios" placeholder="Buscar por nombre, cédula o correo..."
+                   onkeyup="filtrarUsuarios()">
+            <span class="search-icon">🔍</span>
+        </div>
+        <div class="buttons-group">
+            <button onclick="abrirModalCrear()" class="btn-primary">➕ Nuevo Empleado</button>
+            <button onclick="verAuditoria()" class="btn-secondary">📋 Ver Logs (Auditoría)</button>
+        </div>
+    </div>
+
+    <div class="admin-table-container card">
+        <h3>Gestión de Personal</h3>
+        <table id="tabla-usuarios">
+            <thead>
+            <tr>
+                <th>Nombre Completo</th>
+                <th>Cédula</th>
+                <th>Correo Electrónico</th>
+                <th>Cargo</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="cuerpo-tabla">
+            </tbody>
+        </table>
     </div>
 </div>
+
+<div id="modal-container"></div>
+
 <script src="app.js"></script>
 <script>
-    window.onload = () => {
-        const sessionData = sessionStorage.getItem('usuario_logueado');
-        if (!sessionData) {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        const user = JSON.parse(sessionData);
-        if (!user.roles || user.roles.nombre_rol !== 'Administrador') {
-            window.location.href = 'index.html';
-        } else {
-            document.getElementById('user-name').innerText = user.nombre;
-            if (typeof listarUsuarios === 'function') {
-                listarUsuarios();
-            }
-        }
+    // Carga inicial al abrir el panel
+    window.onload = function () {
+        verificarAcceso('Administrador'); // Seguridad RBAC
+        const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+        if (user) document.getElementById('admin-name').innerText = `${user.nombre} ${user.apellido}`;
+        listarUsuarios(); // Carga la tabla
     };
 </script>
 </body>
