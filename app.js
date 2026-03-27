@@ -71,9 +71,11 @@ async function login() {
     document.addEventListener('click', function (e) {
         if (e.target && e.target.id === 'toggle-password') {
             const passwordInput = document.getElementById('password');
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            e.target.textContent = type === 'password' ? '👁️' : '🙈';
+            if (passwordInput) {
+                const esPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', esPassword ? 'text' : 'password');
+                e.target.textContent = esPassword ? '🙈' : '😮️';
+            }
         }
     });
 }
