@@ -833,3 +833,23 @@ table th {
     background: #fee2e2;
     color: #ef4444;
 }
+
+/* Botón de Activar (Verde) */
+.btn-activate {
+    background-color: #10b981;
+    color: white;
+    width: 35px !important;
+    height: 35px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-activate:hover {
+    background-color: #059669;
+}

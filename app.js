@@ -115,10 +115,10 @@ async function listarUsuarios() {
                 <td>
                     <div class="action-buttons">
                         <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit" title="Editar">✏️</button>
-                        ${u.activo !== false 
-                            ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar">🚫</button>` 
-                            : `<button onclick="activarUsuario('${u.id}')" class="btn-activate" title="Activar">✅</button>`
-                        }
+                        ${u.activo !== false
+                ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar">🚫</button>`
+                : `<button onclick="activarUsuario('${u.id}')" class="btn-activate" title="Activar">✅</button>`
+            }
                     </div>
                 </td>
             </tr>
@@ -652,4 +652,36 @@ async function registrarAuditoria(tabla, accion, detalles) {
         detalles: detalles,
         fecha_hora: timestampLocal
     }]);
+}
+
+// --- FUNCIÓN PARA REACTIVAR USUARIOS ---
+async function activarUsuario(id) {
+    const confirmacion = await Swal.fire({
+        title: '¿Reactivar Usuario?',
+        text: "El usuario recuperará su acceso al sistema inmediatamente.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981', // Verde
+        confirmButtonText: 'Sí, activar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (confirmacion.isConfirmed) {
+        const client = getSupabase();
+
+        // Cambiamos el estado de vuelta a 'true'
+        const {error} = await client
+            .from('personas')
+            .update({activo: true})
+            .eq('id', id);
+
+        if (error) {
+            Swal.fire('Error', 'No se pudo activar: ' + error.message, 'error');
+        } else {
+            await registrarAuditoria('personas', 'UPDATE', {id_afectado: id, estado_nuevo: 'Activo'});
+
+            await Swal.fire('Usuario Activado', 'El usuario ya puede ingresar a la Empresa "X".', 'success');
+            listarUsuarios();
+        }
+    }
 }
