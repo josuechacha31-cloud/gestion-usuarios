@@ -44,6 +44,7 @@ async function login() {
         .select('*, roles(nombre_rol)')
         .eq('email', email)
         .eq('password', pass)
+        .eq('activo', true)
         .single();
 
     if (data) {
@@ -104,7 +105,7 @@ async function listarUsuarios() {
                 <td>
                     <div class="action-buttons">
                         <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit">✏️</button>
-                        <button onclick="eliminarUsuario('${u.id}')" class="btn-delete">🗑️</button>
+                        <button onclick="inactivarUsuario('${u.id}')" class="btn-delete">🗑️</button>
                     </div>
                 </td>
             </tr>
@@ -375,25 +376,29 @@ async function verAuditoria() {
     }
 }
 
-async function eliminarUsuario(id) {
+async function inactivarUsuario(id) {
     const confirmacion = await Swal.fire({
-        title: '¿Confirmar eliminación?',
-        text: "Se borrarán todos los registros vinculados (asistencias, permisos).",
+        title: '¿Inactivar Usuario?',
+        text: "El usuario ya no podrá acceder al sistema, pero se conservará su historial para auditoría.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        confirmButtonText: 'Sí, eliminar',
+        confirmButtonColor: '#64748b',
+        confirmButtonText: 'Sí, inactivar',
         cancelButtonText: 'Cancelar'
     });
 
     if (confirmacion.isConfirmed) {
-        const client = getSupabase(); //
-        const {error} = await client.from('personas').delete().eq('id', id); //
+        const client = getSupabase();
+        // Cambiamos el estado a 'false' en lugar de borrar
+        const {error} = await client
+            .from('personas')
+            .update({activo: false})
+            .eq('id', id);
 
         if (error) {
-            Swal.fire('Error', 'No se pudo eliminar: ' + error.message, 'error');
+            Swal.fire('Error', 'No se pudo inactivar: ' + error.message, 'error');
         } else {
-            await Swal.fire('Eliminado', 'Registro borrado de la Empresa X.', 'success');
+            await Swal.fire('Usuario Inactivado', 'El registro ahora es histórico.', 'success');
             listarUsuarios();
         }
     }
