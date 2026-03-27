@@ -40,7 +40,21 @@
         </button>
 
         <div class="admin-table-container">
-            <table id="tabla-usuarios">...</table>
+            <h3>Listado de Personal - Empresa "X"</h3>
+            <table id="tabla-usuarios">
+                <thead>
+                <tr>
+                    <th>Nombre Completo</th>
+                    <th>Cédula</th>
+                    <th>Correo</th>
+                    <th>Cargo</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="cuerpo-tabla">
+                </tbody>
+            </table>
         </div>
 
         <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>

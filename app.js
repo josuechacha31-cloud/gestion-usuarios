@@ -71,8 +71,46 @@ async function login() {
     }
 }
 
+// Función para listar usuarios en el Panel Administrativo
+async function listarUsuarios() {
+    const client = getSupabase();
+    // Traemos los datos incluyendo la relación con la tabla roles
+    const {data, error} = await client
+        .from('personas')
+        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol)')
+        .order('nombre', {ascending: true});
+
+    if (error) {
+        console.error("Error al obtener usuarios:", error);
+        return;
+    }
+
+    const tbody = document.getElementById('cuerpo-tabla');
+    if (!tbody) return;
+
+    tbody.innerHTML = data.map(u => `
+        <tr>
+            <td>${u.nombre} ${u.apellido}</td>
+            <td>${u.cedula}</td>
+            <td>${u.email}</td>
+            <td>${u.cargo || 'Sin asignar'}</td>
+            <td><span class="badge">${u.roles?.nombre_rol || 'Usuario'}</span></td>
+            <td>
+                <button onclick="eliminarUsuario('${u.id}')" 
+                        style="background:var(--admin-color); padding:5px 10px; font-size:11px; width:auto;">
+                    Eliminar
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Función para crear personas (Empresa X)
 async function crearPersona() {
-    const persona = {
+    const client = getSupabase();
+
+    // Capturamos los datos del formulario
+    const nuevaPersona = {
         nombre: document.getElementById('new-name').value,
         apellido: document.getElementById('new-lastname').value,
         cedula: document.getElementById('new-cedula').value,
@@ -80,20 +118,24 @@ async function crearPersona() {
         password: document.getElementById('new-password').value,
         celular: document.getElementById('new-phone').value,
         cargo: document.getElementById('new-cargo').value,
-        remuneracion: parseFloat(document.getElementById('new-salary').value),
+        remuneracion: parseFloat(document.getElementById('new-salary').value) || 0,
         rol_id: parseInt(document.getElementById('new-role').value)
     };
 
-    const {data, error} = await supabaseClient
-        .from('personas')
-        .insert([persona]);
+    // Validación simple
+    if (!nuevaPersona.nombre || !nuevaPersona.email || !nuevaPersona.cedula) {
+        return Swal.fire('Error', 'Nombre, Cédula y Correo son obligatorios', 'error');
+    }
+
+    const {error} = await client.from('personas').insert([nuevaPersona]);
 
     if (error) {
-        alert("Error: " + error.message);
+        Swal.fire('Error de Registro', error.message, 'error');
     } else {
-        alert("¡Empleado registrado exitosamente!");
-        // Limpiar formulario y recargar tabla
-        location.reload();
+        Swal.fire('¡Éxito!', 'Empleado registrado en la Empresa X', 'success');
+        listarUsuarios(); // Recargamos la tabla automáticamente
+        // Limpiar campos
+        document.querySelectorAll('.grid-form input').forEach(i => i.value = '');
     }
 }
 
@@ -205,36 +247,6 @@ async function cargarMisMarcaciones(empleadoId) {
             </tr>
         `;
     });
-}
-
-async function listarUsuarios() {
-    const {data, error} = await supabaseClient
-        .from('personas')
-        .select('nombre, apellido, email, roles(nombre_rol)');
-
-    if (error) return console.error(error);
-
-    const tabla = document.getElementById('tabla-usuarios');
-    if (tabla) {
-        tabla.innerHTML = `
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${data.map(u => `
-                    <tr>
-                        <td>${u.nombre} ${u.apellido}</td>
-                        <td>${u.email}</td>
-                        <td>${u.roles.nombre_rol}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        `;
-    }
 }
 
 async function actualizarDatos() {
