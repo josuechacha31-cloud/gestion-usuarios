@@ -89,9 +89,11 @@ async function listarUsuarios() {
         return;
     }
 
+    // Asegurarnos de incluir 'activo' en el .select()
     const {data, error} = await client
         .from('personas')
-        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol), password');
+        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol), password, activo')
+        .order('nombre', {ascending: true}); // Ordenados alfabéticamente
 
     const tbody = document.getElementById('cuerpo-tabla');
     if (tbody && data) {
@@ -101,11 +103,18 @@ async function listarUsuarios() {
                 <td>${u.cedula}</td>
                 <td>${u.email}</td>
                 <td>${u.cargo || 'N/A'}</td>
-                <td><span class="badge ${u.roles.nombre_rol.toLowerCase()}">${u.roles.nombre_rol}</span></td>
+                <td><span class="badge ${u.roles?.nombre_rol.toLowerCase()}">${u.roles?.nombre_rol}</span></td>
+                
+                <td>
+                    <span class="badge ${u.activo ? 'entrada' : 'delete'}">
+                        ${u.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                </td>
+                
                 <td>
                     <div class="action-buttons">
-                        <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit">✏️</button>
-                        <button onclick="inactivarUsuario('${u.id}')" class="btn-delete">🗑️</button>
+                        <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit" title="Editar">✏️</button>
+                        ${u.activo ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar">🚫</button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -257,6 +266,8 @@ async function registrarMarcacion(tipo) {
         listarAsistenciasEmpleado();
     }
 }
+
+m
 
 // Función para cargar el historial del empleado
 async function cargarMisMarcaciones(empleadoId) {
@@ -482,7 +493,7 @@ async function abrirModalEditar(usuario) {
 }
 
 async function actualizarPersona(id) {
-    const client = getSupabase(); //
+    const client = getSupabase();
 
     const datos = {
         nombre: document.getElementById('new-name').value,
@@ -495,14 +506,14 @@ async function actualizarPersona(id) {
         rol_id: parseInt(document.getElementById('new-role').value)
     };
 
-    const {error} = await client.from('personas').update(datos).eq('id', id); //
+    const {error} = await client.from('personas').update(datos).eq('id', id);
 
     if (error) {
         Swal.fire('Error', 'No se pudo actualizar: ' + error.message, 'error');
     } else {
         await Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
-        cerrarModal(); // Cierra el modal tras el éxito
-        listarUsuarios(); // Refresca la lista
+        cerrarModal();
+        listarUsuarios(); // Refresca la tabla automáticamente sin recargar la página
     }
 }
 
