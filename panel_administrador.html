@@ -35,16 +35,22 @@
 </header>
 
 <div class="dashboard-container">
-
+    <div class="header-card-modern"
+         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h2 style="margin:0;">Gestión de Personal</h2>
+            <p style="color: #64748b; margin:0; font-size: 0.9rem;">Administración de usuarios y permisos - Empresa
+                "X"</p>
+        </div>
+    </div>
     <div class="action-bar card">
         <div class="search-group">
-            <input type="text" id="buscador-usuarios" placeholder="Buscar por nombre, cédula o correo..."
-                   onkeyup="filtrarUsuarios()">
             <span class="search-icon">🔍</span>
+            <input type="text" id="buscador-usuarios" placeholder="Buscar empleado..." onkeyup="filtrarUsuarios()">
         </div>
         <div class="buttons-group">
             <button onclick="abrirModalCrear()" class="btn-primary">➕ Nuevo Empleado</button>
-            <button onclick="verAuditoria()" class="btn-secondary">📋 Ver Logs (Auditoría)</button>
+            <button onclick="verAuditoria()" class="btn-secondary">📋 Ver Logs</button>
         </div>
     </div>
 
