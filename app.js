@@ -342,7 +342,9 @@ async function cargarMisMarcaciones(empleadoId) {
 // Función para cargar modales externos
 async function cargarModal(nombreArchivo) {
     try {
-        const respuesta = await fetch(`modales/${nombreArchivo}.html`);
+        // Añadimos la hora actual a la URL para obligar al navegador a descargar la versión más reciente
+        const timestamp = new Date().getTime();
+        const respuesta = await fetch(`modales/${nombreArchivo}.html?t=${timestamp}`);
         const html = await respuesta.text();
 
         // Creamos un contenedor temporal y lo inyectamos al body
@@ -470,9 +472,32 @@ async function inactivarUsuario(id) {
 // --- FUNCIONES DEL DASHBOARD ADMINISTRADOR ---
 
 // 1. Abrir el modal de creación
-async function abrirModalCrear() {
+// --- FUNCIÓN PARA ABRIR MODAL DE EDICIÓN (BLINDADA) ---
+async function abrirModalEditar(usuario) {
     await cargarModal('modal_crear_empleado');
     await cargarListaJefes();
+
+    document.querySelector('.modal-header h3').innerText = "Editar Empleado";
+    const btnGuardar = document.querySelector('.modal-footer .btn-primary');
+    btnGuardar.innerText = "💾 Actualizar Datos";
+    btnGuardar.onclick = () => actualizarPersona(usuario.id);
+
+    if (document.getElementById('new-name')) document.getElementById('new-name').value = usuario.nombre;
+    if (document.getElementById('new-lastname')) document.getElementById('new-lastname').value = usuario.apellido;
+    if (document.getElementById('new-cedula')) document.getElementById('new-cedula').value = usuario.cedula;
+    if (document.getElementById('new-email')) document.getElementById('new-email').value = usuario.email;
+    if (document.getElementById('new-password')) document.getElementById('new-password').value = usuario.password;
+    if (document.getElementById('new-cargo')) document.getElementById('new-cargo').value = usuario.cargo || '';
+
+    if (document.getElementById('new-salary')) document.getElementById('new-salary').value = usuario.remuneracion || 0;
+
+    if (document.getElementById('new-role') && usuario.roles) {
+        document.getElementById('new-role').value = (usuario.roles.nombre_rol === 'Administrador') ? 1 : (usuario.roles.nombre_rol === 'Empleado' ? 2 : 3);
+    }
+    const selectJefe = document.getElementById('new-jefe');
+    if (selectJefe) {
+        selectJefe.value = usuario.jefe_id ? usuario.jefe_id : "";
+    }
 }
 
 // 2. Buscador en Tiempo Real (Filtro de tabla)
