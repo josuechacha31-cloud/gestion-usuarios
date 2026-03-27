@@ -73,36 +73,36 @@ async function login() {
 
 // Función para listar usuarios en el Panel Administrativo
 async function listarUsuarios() {
+    // 1. Obtener el cliente
     const client = getSupabase();
-    // Traemos los datos incluyendo la relación con la tabla roles
-    const {data, error} = await client
-        .from('personas')
-        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol)')
-        .order('nombre', {ascending: true});
-
-    if (error) {
-        console.error("Error al obtener usuarios:", error);
+    if (!client) {
+        console.error("El cliente de Supabase no está listo.");
         return;
     }
-
+    // 2. Realizar la consulta
+    const { data, error } = await client
+        .from('personas')
+        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol)');
+    if (error) {
+        console.error("Error de Supabase:", error.message);
+        return;
+    }
+    // 3. Pintar en el HTML
     const tbody = document.getElementById('cuerpo-tabla');
-    if (!tbody) return;
-
-    tbody.innerHTML = data.map(u => `
-        <tr>
-            <td>${u.nombre} ${u.apellido}</td>
-            <td>${u.cedula}</td>
-            <td>${u.email}</td>
-            <td>${u.cargo || 'Sin asignar'}</td>
-            <td><span class="badge">${u.roles?.nombre_rol || 'Usuario'}</span></td>
-            <td>
-                <button onclick="eliminarUsuario('${u.id}')" 
-                        style="background:var(--admin-color); padding:5px 10px; font-size:11px; width:auto;">
-                    Eliminar
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    if (tbody) {
+        tbody.innerHTML = data.map(u => `
+            <tr>
+                <td>${u.nombre} ${u.apellido}</td>
+                <td>${u.cedula}</td>
+                <td>${u.email}</td>
+                <td>${u.cargo || 'N/A'}</td>
+                <td><span class="badge">${u.roles?.nombre_rol || 'Usuario'}</span></td>
+                <td>
+                    <button onclick="eliminarUsuario('${u.id}')" style="background:red; width:auto; padding:5px;">Eliminar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
 }
 
 // Función para crear personas (Empresa X)
