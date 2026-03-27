@@ -29,8 +29,8 @@ function getSupabase() {
 }
 
 async function login() {
-    const email = document.getElementById('email-input').value;
-    const pass = document.getElementById('password-input').value;
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('password').value;
 
     const client = getSupabase();
     if (!client) {
@@ -217,54 +217,6 @@ async function gestionarPermiso(idPermiso, nuevoEstado) {
     }
 }
 
-
-async function registrarMarcacion(tipo) {
-    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-    const client = getSupabase();
-
-    // Bloquear botón para evitar doble clic
-    const btn = event.target;
-    btn.disabled = true;
-
-    const {error} = await client.from('asistencias').insert([
-        {empleado_id: user.id, tipo: tipo}
-    ]);
-
-    if (!error) {
-        Swal.fire({
-            title: `¡${tipo} Registrada!`,
-            text: `Hora: ${new Date().toLocaleTimeString()}`,
-            icon: 'success',
-            timer: 2000
-        });
-        cargarMisMarcaciones(user.id);
-    } else {
-        Swal.fire('Error', 'No se pudo registrar', 'error');
-    }
-    btn.disabled = false;
-}
-
-async function cargarMisMarcaciones(empleadoId) {
-    const {data} = await supabaseClient
-        .from('asistencias')
-        .select('*')
-        .eq('empleado_id', empleadoId)
-        .order('fecha_hora', {ascending: false});
-
-    const tabla = document.getElementById('tabla-asistencias');
-    tabla.innerHTML = '';
-    data.forEach(m => {
-        const dt = new Date(m.fecha_hora);
-        tabla.innerHTML += `
-            <tr>
-                <td>${dt.toLocaleDateString()}</td>
-                <td>${dt.toLocaleTimeString()}</td>
-                <td>${m.tipo}</td>
-            </tr>
-        `;
-    });
-}
-
 async function actualizarDatos() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     const nuevoCelular = document.getElementById('edit-celular').value;
@@ -312,7 +264,7 @@ async function registrarMarcacion(tipo) {
 // Función para cargar el historial del empleado
 async function cargarMisMarcaciones(empleadoId) {
     const client = getSupabase();
-    const {data, error} = await client
+    const {data} = await client
         .from('asistencias')
         .select('*')
         .eq('empleado_id', empleadoId)
