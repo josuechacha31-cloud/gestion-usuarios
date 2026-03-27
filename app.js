@@ -115,7 +115,10 @@ async function listarUsuarios() {
                 <td>
                     <div class="action-buttons">
                         <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit" title="Editar">✏️</button>
-                        ${u.activo !== false ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar">🚫</button>` : ''}
+                        ${u.activo !== false 
+                            ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar">🚫</button>` 
+                            : `<button onclick="activarUsuario('${u.id}')" class="btn-activate" title="Activar">✅</button>`
+                        }
                     </div>
                 </td>
             </tr>
