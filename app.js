@@ -374,7 +374,7 @@ async function cargarModal(nombreArchivo) {
     try {
         // Añadimos la hora actual a la URL para obligar al navegador a descargar la versión más reciente
         const timestamp = new Date().getTime();
-        const respuesta = await fetch(`modales/${nombreArchivo}.html?t=${timestamp}`);
+        const respuesta = await fetch(`${nombreArchivo}.html?t=${timestamp}`);
         const html = await respuesta.text();
 
         // Creamos un contenedor temporal y lo inyectamos al body
@@ -612,6 +612,24 @@ document.addEventListener('click', function (e) {
         e.target.textContent = esOculto ? '😮' : '🙈';
     }
 });
+
+// Función para abrir el modal de creación de empleados
+async function abrirModalCrear() {
+    await cargarModal('modal_crear_empleado');
+    // Cambiar título del modal y texto del botón
+    const titulo = document.querySelector('.modal-header h3');
+    if (titulo) titulo.innerText = "Registrar Nuevo Empleado";
+    const btnGuardar = document.querySelector('.modal-footer .btn-primary');
+    if (btnGuardar) {
+        btnGuardar.innerText = "💾 Guardar";
+        btnGuardar.onclick = () => crearPersona();
+    }
+    // Limpiar el formulario
+    const form = document.getElementById('form-crear-usuario');
+    if (form) form.reset();
+    // Cargar la lista de jefes (para el select)
+    await cargarListaJefes();
+}
 
 async function abrirModalEditar(usuario) {
     await cargarModal('modal_crear_empleado');
