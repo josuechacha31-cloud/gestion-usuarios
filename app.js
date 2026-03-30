@@ -89,41 +89,43 @@ async function listarUsuarios() {
         return;
     }
 
-    // Aseguramos pedir el campo 'activo'
     const {data, error} = await client
         .from('personas')
-        .select('id, nombre, apellido, cedula, email, cargo, roles(nombre_rol), password, activo, jefe_id')
+        .select('id, nombre, apellido, cedula, email, celular, direccion, cargo, roles(nombre_rol), password, activo, jefe_id')
         .order('nombre', {ascending: true});
 
     const tbody = document.getElementById('cuerpo-tabla');
     if (tbody && data) {
-        tbody.innerHTML = data.map(u => {
-            // Manejamos el estado (por si hay registros antiguos sin el campo)
-            const estadoTexto = u.activo !== false ? 'Activo' : 'Inactivo';
-            const estadoClase = u.activo !== false ? 'entrada' : 'delete'; // Verde o Rojo
-
-            return `
-            <tr class="table-row">
-                <td>${u.nombre} ${u.apellido}</td>
-                <td>${u.cedula}</td>
-                <td>${u.email}</td>
-                <td>${u.cargo || 'N/A'}</td>
-                <td><span class="badge ${u.roles?.nombre_rol.toLowerCase()}">${u.roles?.nombre_rol}</span></td>
-                
-                <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
-                
-                <td>
-                    <div class="action-buttons">
-                        <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit" title="Editar">✏️</button>
-                        ${u.activo !== false
-                ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar">🚫</button>`
-                : `<button onclick="activarUsuario('${u.id}')" class="btn-activate" title="Activar">✅</button>`
-            }
-                    </div>
-                </td>
-            </tr>
-        `
-        }).join('');
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No hay empleados registrados.</td></tr>';
+        } else {
+            tbody.innerHTML = data.map(u => {
+                const estadoTexto = u.activo !== false ? 'Activo' : 'Inactivo';
+                const estadoClase = u.activo !== false ? 'entrada' : 'delete';
+                const telefono = u.celular || '—';
+                const direccion = u.direccion || '—';
+                return `
+                <tr class="table-row">
+                     <td>${u.nombre} ${u.apellido}</td>
+                     <td>${u.cedula}</td>
+                     <td>${u.email}</td>
+                     <td>${telefono}</td>
+                     <td>${direccion}</td>
+                     <td>${u.cargo || 'N/A'}</td>
+                     <td><span class="badge ${u.roles?.nombre_rol.toLowerCase()}">${u.roles?.nombre_rol}</span></td>
+                     <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
+                     <td>
+                        <div class="action-buttons">
+                            <button onclick='abrirModalEditar(${JSON.stringify(u)})' class="btn-edit" title="Editar usuario">✏️</button>
+                            ${u.activo !== false
+                                ? `<button onclick="inactivarUsuario('${u.id}')" class="btn-delete" title="Inactivar usuario">🚫</button>`
+                                : `<button onclick="activarUsuario('${u.id}')" class="btn-activate" title="Reactivar usuario">✅</button>`
+                            }
+                        </div>
+                     </td>
+                </tr>
+            `}).join('');
+        }
     }
 }
 
@@ -508,17 +510,22 @@ async function abrirModalEditar(usuario) {
     btnGuardar.innerText = "💾 Actualizar Datos";
     btnGuardar.onclick = () => actualizarPersona(usuario.id);
 
-    if (document.getElementById('new-name')) document.getElementById('new-name').value = usuario.nombre;
-    if (document.getElementById('new-lastname')) document.getElementById('new-lastname').value = usuario.apellido;
-    if (document.getElementById('new-cedula')) document.getElementById('new-cedula').value = usuario.cedula;
-    if (document.getElementById('new-email')) document.getElementById('new-email').value = usuario.email;
-    if (document.getElementById('new-password')) document.getElementById('new-password').value = usuario.password;
-    if (document.getElementById('new-cargo')) document.getElementById('new-cargo').value = usuario.cargo || '';
-
-    if (document.getElementById('new-salary')) document.getElementById('new-salary').value = usuario.remuneracion || 0;
-
-    if (document.getElementById('new-role') && usuario.roles) {
-        document.getElementById('new-role').value = (usuario.roles.nombre_rol === 'Administrador') ? 1 : (usuario.roles.nombre_rol === 'Empleado' ? 2 : 3);
+    // Rellenar todos los campos
+    document.getElementById('new-name').value = usuario.nombre;
+    document.getElementById('new-lastname').value = usuario.apellido;
+    document.getElementById('new-cedula').value = usuario.cedula;
+    document.getElementById('new-email').value = usuario.email;
+    document.getElementById('new-password').value = usuario.password;
+    document.getElementById('new-cargo').value = usuario.cargo || '';
+    document.getElementById('new-phone').value = usuario.celular || '';
+    document.getElementById('new-address').value = usuario.direccion || '';
+    
+    if (document.getElementById('new-salary')) {
+        document.getElementById('new-salary').value = usuario.remuneracion || 0;
+    }
+    const rolSelect = document.getElementById('new-role');
+    if (rolSelect && usuario.roles) {
+        rolSelect.value = (usuario.roles.nombre_rol === 'Administrador') ? 1 : (usuario.roles.nombre_rol === 'Empleado' ? 2 : 3);
     }
     const selectJefe = document.getElementById('new-jefe');
     if (selectJefe) {
@@ -534,20 +541,19 @@ function filtrarUsuarios() {
     const rows = tbody.getElementsByTagName('tr');
 
     for (let i = 0; i < rows.length; i++) {
-        // Obtenemos el texto de las columnas Nombre, Cédula y Correo
-        const nameCell = rows[i].getElementsByTagName('td')[0];
-        const cedulaCell = rows[i].getElementsByTagName('td')[1];
-        const emailCell = rows[i].getElementsByTagName('td')[2];
+        const cells = rows[i].getElementsByTagName('td');
+        if (cells.length >= 5) {
+            const nombre = cells[0].textContent.toLowerCase();
+            const cedula = cells[1].textContent.toLowerCase();
+            const email = cells[2].textContent.toLowerCase();
+            const telefono = cells[3].textContent.toLowerCase();
+            const direccion = cells[4].textContent.toLowerCase();
 
-        if (nameCell || cedulaCell || emailCell) {
-            const txtValue = (nameCell.textContent || nameCell.innerText) + ' ' +
-                (cedulaCell.textContent || cedulaCell.innerText) + ' ' +
-                (emailCell.textContent || emailCell.innerText);
-
-            if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                rows[i].style.display = ""; // Muestra la fila
+            if (nombre.includes(filter) || cedula.includes(filter) || email.includes(filter) ||
+                telefono.includes(filter) || direccion.includes(filter)) {
+                rows[i].style.display = "";
             } else {
-                rows[i].style.display = "none"; // Oculta la fila
+                rows[i].style.display = "none";
             }
         }
     }
