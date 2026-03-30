@@ -1,6 +1,30 @@
 const SB_URL = "https://vmorgejoxarkypgeavin.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtb3JnZWpveGFya3lwZ2VhdmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDAxODAsImV4cCI6MjA5MDExNjE4MH0.Snj2a7UVGvYhXfE8_1Rx-X91fupnPq-4A9fVMAj38jQ";
 
+// ==================== VALIDACIONES ====================
+function validarCamposPersona(datos) {
+    const { nombre, apellido, cedula, email, password, rol_id } = datos;
+    if (!nombre || !apellido || !cedula || !email || !password || !rol_id) {
+        Swal.fire('Campos incompletos', 'Todos los campos marcados con * son obligatorios.', 'warning');
+        return false;
+    }
+    const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        Swal.fire('Email inválido', 'Por favor ingrese un correo electrónico válido.', 'error');
+        return false;
+    }
+    const cedulaRegex = /^\d{10}$/;
+    if (!cedulaRegex.test(cedula)) {
+        Swal.fire('Cédula inválida', 'La cédula debe tener 10 dígitos numéricos.', 'error');
+        return false;
+    }
+    if (datos.celular && !/^\d{7,10}$/.test(datos.celular)) {
+        Swal.fire('Teléfono inválido', 'El teléfono debe contener solo números (7-10 dígitos).', 'error');
+        return false;
+    }
+    return true;
+}
+
 let supabaseClient;
 
 function verificarAcceso(rolRequerido) {
@@ -165,6 +189,7 @@ async function crearPersona() {
         jefe_id: valorJefe ? valorJefe : null
     };
 
+    if (!validarCamposPersona(datos)) return;
     const {error} = await client.from('personas').insert([nuevaPersona]);
 
     if (error) {
@@ -614,6 +639,7 @@ async function abrirModalEditar(usuario) {
 }
 
 async function actualizarPersona(id) {
+    if (!validarCamposPersona(datos)) return;
     const client = getSupabase();
     const valorJefe = document.getElementById('new-jefe').value;
     const datos = {
