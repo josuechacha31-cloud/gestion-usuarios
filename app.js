@@ -990,4 +990,150 @@ async function cargarListaJefes() {
             });
         }
     }
+    // ==================== GRÁFICO DE HORAS TRABAJADAS (EMPLEADO) ====================
+async function cargarGraficoHoras() {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    if (!user) return;
+    const client = getSupabase();
+    if (!client) return;
+
+    // Obtener primer y último día del mes actual
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    const inicioStr = inicioMes.toISOString().slice(0, 10) + ' 00:00:00';
+    const finStr = finMes.toISOString().slice(0, 10) + ' 23:59:59';
+
+    const { data, error } = await client
+        .from('asistencias')
+        .select('fecha_hora, tipo')
+        .eq('empleado_id', user.id)
+        .gte('fecha_hora', inicioStr)
+        .lte('fecha_hora', finStr)
+        .order('fecha_hora', { ascending: true });
+
+    if (error || !data) return;
+
+    // Agrupar por día y calcular horas
+    const horasPorDia = {};
+    let entradaDelDia = null;
+
+    data.forEach(reg => {
+        const fecha = reg.fecha_hora.slice(0, 10);
+        if (reg.tipo === 'Entrada') {
+            entradaDelDia = new Date(reg.fecha_hora);
+        } else if (reg.tipo === 'Salida' && entradaDelDia) {
+            const salida = new Date(reg.fecha_hora);
+            const diffMs = salida - entradaDelDia;
+            const horas = diffMs / (1000 * 60 * 60);
+            if (horas > 0 && horas < 24) {
+                horasPorDia[fecha] = (horasPorDia[fecha] || 0) + horas;
+            }
+            entradaDelDia = null;
+        }
+    });
+
+    // Preparar arrays para el gráfico
+    const labels = Object.keys(horasPorDia).sort();
+    const horasData = labels.map(dia => horasPorDia[dia].toFixed(1));
+
+    const ctx = document.getElementById('horasChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Horas trabajadas',
+                data: horasData,
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: '#3b82f6',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Horas' } },
+                x: { title: { display: true, text: 'Día' } }
+            }
+        }
+    });
+}
+}
+// ==================== RESUMEN DE HORAS POR EMPLEADO (JEFE) ====================
+async function mostrarResumenHoras() {
+    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
+    if (!user) return;
+    const client = getSupabase();
+
+    const desde = document.getElementById('filtro-desde-jefe').value;
+    const hasta = document.getElementById('filtro-hasta-jefe').value;
+    if (!desde || !hasta) {
+        Swal.fire('Rango de fechas', 'Por favor selecciona un rango de fechas antes de ver el resumen.', 'warning');
+        return;
+    }
+
+    const inicio = `${desde} 00:00:00`;
+    const fin = `${hasta} 23:59:59`;
+
+    // Obtener asistencias del equipo en el rango
+    const { data, error } = await client
+        .from('asistencias')
+        .select(`tipo, fecha_hora, personas!inner (id, nombre, apellido)`)
+        .eq('personas.jefe_id', user.id)
+        .gte('fecha_hora', inicio)
+        .lte('fecha_hora', fin)
+        .order('fecha_hora', { ascending: true });
+
+    if (error || !data) {
+        Swal.fire('Error', 'No se pudo obtener los datos.', 'error');
+        return;
+    }
+
+    // Procesar horas por empleado
+    const empleados = {};
+    data.forEach(reg => {
+        const empId = reg.personas.id;
+        const empNombre = `${reg.personas.nombre} ${reg.personas.apellido}`;
+        if (!empleados[empId]) {
+            empleados[empId] = { nombre: empNombre, horas: 0, entrada: null };
+        }
+        if (reg.tipo === 'Entrada') {
+            empleados[empId].entrada = new Date(reg.fecha_hora);
+        } else if (reg.tipo === 'Salida' && empleados[empId].entrada) {
+            const salida = new Date(reg.fecha_hora);
+            const diffMs = salida - empleados[empId].entrada;
+            const horas = diffMs / (1000 * 60 * 60);
+            if (horas > 0 && horas < 24) {
+                empleados[empId].horas += horas;
+            }
+            empleados[empId].entrada = null;
+        }
+    });
+
+    // Crear tabla HTML
+    let html = `<div class="modal-overlay" id="modal-resumen">
+        <div class="card modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Resumen de horas trabajadas</h3>
+                <button onclick="cerrarModal()" class="btn-close-modal">×</button>
+            </div>
+            <p>Rango: ${desde} al ${hasta}</p>
+            <table style="width:100%; border-collapse:collapse;">
+                <thead><tr><th>Empleado</th><th>Horas totales</th></tr></thead>
+                <tbody>`;
+    for (let emp of Object.values(empleados)) {
+        html += `<tr><td>${emp.nombre}</td><td>${emp.horas.toFixed(1)}</td></tr>`;
+    }
+    html += `</tbody></table>
+            <div class="modal-footer">
+                <button onclick="cerrarModal()" class="btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>`;
+
+    // Inyectar modal
+    const contenedor = document.createElement('div');
+    contenedor.innerHTML = html;
+    document.body.appendChild(contenedor.firstElementChild);
 }
