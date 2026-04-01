@@ -157,22 +157,23 @@ async function crearPersona() {
     const client = getSupabase();
     if (!client) return;
 
-    // Capturamos los datos con los IDs correctos del nuevo modal
+    // Capturar todos los campos con los IDs correctos
     const nombre = document.getElementById('new-name')?.value;
     const apellido = document.getElementById('new-lastname')?.value;
     const cedula = document.getElementById('new-cedula')?.value;
     const email = document.getElementById('new-email')?.value;
     const password = document.getElementById('new-password')?.value;
-    const celular = document.getElementById('new-phone')?.value;
+    const celular = document.getElementById('new-phone')?.value;      // ← campo teléfono
+    const direccion = document.getElementById('new-address')?.value; // ← campo dirección
     const cargo = document.getElementById('new-cargo')?.value;
-    const remuneracion = document.getElementById('new-salary')?.value; // Verifica que este ID exista en el HTML
+    const remuneracion = document.getElementById('new-salary')?.value;
     const rol_id = document.getElementById('new-role')?.value;
-    const direccion = document.getElementById('new-address')?.value;
-    const valorJefe = document.getElementById('new-jefe').value;
+    const valorJefe = document.getElementById('new-jefe')?.value;
 
-    // Validación de campos obligatorios para la Empresa "X"
+    // Validar campos obligatorios
     if (!nombre || !apellido || !cedula || !email || !password || !rol_id) {
-        return Swal.fire('Campos Incompletos', 'Por favor, llene todos los campos marcados con (*)', 'warning');
+        Swal.fire('Campos Incompletos', 'Por favor, llene todos los campos marcados con (*)', 'warning');
+        return;
     }
 
     const nuevaPersona = {
@@ -182,15 +183,17 @@ async function crearPersona() {
         email: email,
         password: password,
         celular: celular,
+        direccion: direccion,
         cargo: cargo,
         remuneracion: parseFloat(remuneracion) || 0,
         rol_id: parseInt(rol_id),
-        direccion: direccion,
         jefe_id: valorJefe ? valorJefe : null
     };
 
-    if (!validarCamposPersona(datos)) return;
-    const {error} = await client.from('personas').insert([nuevaPersona]);
+    // Validación extra (si ya tienes la función validarCamposPersona)
+    if (typeof validarCamposPersona === 'function' && !validarCamposPersona(nuevaPersona)) return;
+
+    const { error } = await client.from('personas').insert([nuevaPersona]);
 
     if (error) {
         cerrarModal();
@@ -657,22 +660,33 @@ async function abrirModalEditar(usuario) {
 }
 
 async function actualizarPersona(id) {
-    if (!validarCamposPersona(datos)) return;
     const client = getSupabase();
-    const valorJefe = document.getElementById('new-jefe').value;
+    const valorJefe = document.getElementById('new-jefe')?.value;
+
     const datos = {
-        nombre: document.getElementById('new-name').value,
-        apellido: document.getElementById('new-lastname').value,
-        cedula: document.getElementById('new-cedula').value,
-        email: document.getElementById('new-email').value,
-        password: document.getElementById('new-password').value,
-        cargo: document.getElementById('new-cargo').value,
-        remuneracion: parseFloat(document.getElementById('new-salary').value) || 0,
-        rol_id: parseInt(document.getElementById('new-role').value),
+        nombre: document.getElementById('new-name')?.value,
+        apellido: document.getElementById('new-lastname')?.value,
+        cedula: document.getElementById('new-cedula')?.value,
+        email: document.getElementById('new-email')?.value,
+        password: document.getElementById('new-password')?.value,
+        celular: document.getElementById('new-phone')?.value,      // ← añadido
+        direccion: document.getElementById('new-address')?.value, // ← añadido
+        cargo: document.getElementById('new-cargo')?.value,
+        remuneracion: parseFloat(document.getElementById('new-salary')?.value) || 0,
+        rol_id: parseInt(document.getElementById('new-role')?.value),
         jefe_id: valorJefe ? valorJefe : null
     };
 
-    const {error} = await client.from('personas').update(datos).eq('id', id);
+    // Validar campos obligatorios
+    if (!datos.nombre || !datos.apellido || !datos.cedula || !datos.email || !datos.password || !datos.rol_id) {
+        Swal.fire('Campos Incompletos', 'Por favor, llene todos los campos marcados con (*)', 'warning');
+        return;
+    }
+
+    // Validación extra (si existe)
+    if (typeof validarCamposPersona === 'function' && !validarCamposPersona(datos)) return;
+
+    const { error } = await client.from('personas').update(datos).eq('id', id);
 
     if (error) {
         cerrarModal();
@@ -681,7 +695,7 @@ async function actualizarPersona(id) {
         cerrarModal();
         await registrarAuditoria('personas', 'UPDATE', datos);
         await Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
-        listarUsuarios(); // Ahora sí refresca la lista al instante
+        listarUsuarios();
     }
 }
 
