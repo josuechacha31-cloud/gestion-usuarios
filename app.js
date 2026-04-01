@@ -374,7 +374,7 @@ async function cargarModal(nombreArchivo) {
     try {
         // Añadimos la hora actual a la URL para obligar al navegador a descargar la versión más reciente
         const timestamp = new Date().getTime();
-        const respuesta = await fetch(`${nombreArchivo}.html?t=${timestamp}`);
+        const respuesta = await fetch(`modales/${nombreArchivo}.html?t=${timestamp}`);
         const html = await respuesta.text();
 
         // Creamos un contenedor temporal y lo inyectamos al body
