@@ -391,10 +391,11 @@ async function cargarModal(nombreArchivo) {
 }
 
 // Función segura para cerrar cualquier modal
+// Función para cerrar cualquier modal
 function cerrarModal() {
-    const contenedorOscuro = document.getElementById('contenedor-modal');
-    if (contenedorOscuro) {
-        contenedorOscuro.remove();
+    const contenedor = document.getElementById('contenedor-modal');
+    if (contenedor) {
+        contenedor.remove();
     }
 }
 
@@ -1076,7 +1077,6 @@ async function mostrarResumenHoras() {
     const inicio = `${desde} 00:00:00`;
     const fin = `${hasta} 23:59:59`;
 
-    // Obtener asistencias del equipo en el rango
     const { data, error } = await client
         .from('asistencias')
         .select(`tipo, fecha_hora, personas!inner (id, nombre, apellido)`)
@@ -1090,7 +1090,6 @@ async function mostrarResumenHoras() {
         return;
     }
 
-    // Procesar horas por empleado
     const empleados = {};
     data.forEach(reg => {
         const empId = reg.personas.id;
@@ -1111,8 +1110,7 @@ async function mostrarResumenHoras() {
         }
     });
 
-    // Crear tabla HTML
-    let html = `<div class="modal-overlay" id="modal-resumen">
+    let html = `<div id="contenedor-modal" class="modal-overlay">
         <div class="card modal-content" style="max-width: 600px;">
             <div class="modal-header">
                 <h3>Resumen de horas trabajadas</h3>
@@ -1132,7 +1130,11 @@ async function mostrarResumenHoras() {
         </div>
     </div>`;
 
-    // Inyectar modal
+    // Eliminar cualquier modal anterior
+    const existingModal = document.getElementById('contenedor-modal');
+    if (existingModal) existingModal.remove();
+
+    // Insertar nuevo modal
     const contenedor = document.createElement('div');
     contenedor.innerHTML = html;
     document.body.appendChild(contenedor.firstElementChild);
