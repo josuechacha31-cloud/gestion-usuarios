@@ -1139,3 +1139,74 @@ async function mostrarResumenHoras() {
     contenedor.innerHTML = html;
     document.body.appendChild(contenedor.firstElementChild);
 }
+// ==================== EXPORTAR A CSV ====================
+function exportarCSV(nombreArchivo, tablaId) {
+    // Obtener la tabla por ID
+    const tabla = document.getElementById(tablaId);
+    if (!tabla) {
+        console.error('Tabla no encontrada:', tablaId);
+        return;
+    }
+
+    // Obtener encabezados (th) del thead
+    const cabeceras = [];
+    const ths = tabla.querySelectorAll('thead th');
+    ths.forEach(th => {
+        // Limpiar el texto (eliminar iconos o espacios extra)
+        let texto = th.innerText.trim();
+        // Si tiene ícono o algo, limpiar (opcional)
+        texto = texto.replace(/[🔍✏️🚫✅📊📋➕🕒📤📥]/g, '').trim();
+        cabeceras.push(texto);
+    });
+
+    // Obtener filas del tbody
+    const filas = tabla.querySelectorAll('tbody tr');
+    const datos = [];
+    filas.forEach(fila => {
+        const celdas = fila.querySelectorAll('td');
+        const filaData = [];
+        celdas.forEach(celda => {
+            // Obtener texto plano, eliminar etiquetas internas (badges, botones)
+            let texto = celda.innerText.trim();
+            // Limpiar posibles saltos de línea o espacios múltiples
+            texto = texto.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+            filaData.push(texto);
+        });
+        // Solo agregar si hay datos (evitar filas vacías)
+        if (filaData.length > 0 && filaData.some(c => c !== '')) {
+            datos.push(filaData);
+        }
+    });
+
+    // Si no hay datos, mostrar mensaje
+    if (datos.length === 0) {
+        Swal.fire('Sin datos', 'No hay registros para exportar.', 'info');
+        return;
+    }
+
+    // Crear contenido CSV
+    let csvContent = cabeceras.join(',') + '\n';
+    datos.forEach(fila => {
+        // Escapar comillas y comas dentro de los campos
+        const filaEscapada = fila.map(celda => {
+            if (celda.includes(',') || celda.includes('"') || celda.includes('\n')) {
+                return `"${celda.replace(/"/g, '""')}"`;
+            }
+            return celda;
+        }).join(',');
+        csvContent += filaEscapada + '\n';
+    });
+
+    // Crear enlace de descarga
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF para caracteres especiales
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `${nombreArchivo}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    Swal.fire('Exportado', `Archivo ${nombreArchivo}.csv generado`, 'success');
+}
