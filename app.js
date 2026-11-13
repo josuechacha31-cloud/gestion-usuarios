@@ -3,8 +3,8 @@ const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 
 // ==================== VALIDACIONES ====================
 function validarCamposPersona(datos) {
-    const { nombre, apellido, cedula, email, password, rol_id } = datos;
-    if (!nombre || !apellido || !cedula || !email || !password || !rol_id) {
+    const {nombre, apellido, cedula, email, rol_id} = datos;
+    if (!nombre || !apellido || !cedula || !email || !rol_id) {
         Swal.fire('Campos incompletos', 'Todos los campos marcados con * son obligatorios.', 'warning');
         return false;
     }
@@ -27,22 +27,8 @@ function validarCamposPersona(datos) {
 
 let supabaseClient;
 
-function verificarAcceso(rolRequerido) {
-    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-    if (!user) {
-        window.location.href = 'index.html';
-        return;
-    }
-    if (rolRequerido && user.roles.nombre_rol !== rolRequerido) {
-        Swal.fire('Acceso Restringido', 'No tienes permisos para esta sección.', 'error')
-            .then(() => window.location.href = 'index.html');
-    }
-}
-
-// Función para obtener el cliente de forma segura
 function getSupabase() {
     if (!supabaseClient) {
-        // Si por alguna razón la librería no ha cargado, intentamos crearla
         if (typeof supabase !== 'undefined') {
             supabaseClient = supabase.createClient(SB_URL, SB_KEY);
         } else {
@@ -50,6 +36,50 @@ function getSupabase() {
         }
     }
     return supabaseClient;
+}
+
+async function obtenerPerfilActual() {
+    const client = getSupabase();
+    if (!client) return null;
+
+    const {data: authData, error: authError} = await client.auth.getUser();
+    if (authError || !authData.user) return null;
+
+    const {data: perfil, error: perfilError} = await client
+        .from('personas')
+        .select('*, roles(nombre)')
+        .eq('auth_user_id', authData.user.id)
+        .eq('activo', true)
+        .single();
+
+    if (perfilError || !perfil) return null;
+
+    sessionStorage.setItem('usuario_logueado', JSON.stringify(perfil));
+    return perfil;
+}
+
+function redirigirSegunRol(perfil) {
+    const rol = perfil.roles?.nombre;
+    if (rol === 'Administrador') window.location.href = 'panel_administrador.html';
+    else if (rol === 'Jefe') window.location.href = 'panel_jefe.html';
+    else window.location.href = 'panel_empleado.html';
+}
+
+async function verificarAcceso(rolRequerido) {
+    const perfil = await obtenerPerfilActual();
+    if (!perfil) {
+        sessionStorage.clear();
+        window.location.href = 'index.html';
+        return null;
+    }
+
+    if (rolRequerido && perfil.roles?.nombre !== rolRequerido) {
+        await Swal.fire('Acceso restringido', 'No tienes permisos para esta sección.', 'error');
+        redirigirSegunRol(perfil);
+        return null;
+    }
+
+    return perfil;
 }
 
 async function login() {
@@ -63,46 +93,75 @@ async function login() {
     }
     if (!email || !pass) return;
 
-    const {data, error} = await client
-        .from('personas')
-        .select('*, roles(nombre_rol)')
-        .eq('email', email)
-        .eq('password', pass)
-        .eq('activo', true)
-        .single();
+    const {error} = await client.auth.signInWithPassword({email, password: pass});
 
-    if (data) {
-        sessionStorage.setItem('usuario_logueado', JSON.stringify(data));
+    if (!error) {
+        const perfil = await obtenerPerfilActual();
+        if (!perfil) {
+            await client.auth.signOut();
+            Swal.fire('Acceso denegado', 'La cuenta no tiene un perfil activo en el sistema.', 'error');
+            return;
+        }
 
         Swal.fire({
             icon: 'success',
-            title: `¡Bienvenido, ${data.nombre}!`,
+            title: `¡Bienvenido, ${perfil.nombre}!`,
             text: 'Accediendo al sistema...',
             timer: 1500,
             showConfirmButton: false
-        }).then(() => {
-            const rol = data.roles.nombre_rol;
-            if (rol === 'Administrador') window.location.href = 'panel_administrador.html';
-            else if (rol === 'Jefe') window.location.href = 'panel_jefe.html';
-            else window.location.href = 'panel_empleado.html';
-        });
+        }).then(() => redirigirSegunRol(perfil));
     } else {
         Swal.fire({
             icon: 'error',
-            title: 'Acceso Denegado',
+            title: 'Acceso denegado',
             text: 'Correo o contraseña incorrectos.'
         });
     }
-    document.addEventListener('click', function (e) {
-        if (e.target && e.target.id === 'toggle-password') {
-            const passwordInput = document.getElementById('password');
-            if (passwordInput) {
-                const esPassword = passwordInput.getAttribute('type') === 'password';
-                passwordInput.setAttribute('type', esPassword ? 'text' : 'password');
-                e.target.textContent = esPassword ? '🙈' : '😮️';
+}
+
+async function activarCuenta() {
+    const client = getSupabase();
+    if (!client) return;
+
+    const {value: datos} = await Swal.fire({
+        title: 'Activar cuenta',
+        html: `
+            <p style="text-align:left; margin-bottom:12px;">Usa el correo registrado por el administrador y crea una contraseña nueva.</p>
+            <input id="activar-email" class="swal2-input" type="email" placeholder="Correo registrado">
+            <input id="activar-password" class="swal2-input" type="password" placeholder="Contraseña (mínimo 8 caracteres)">
+        `,
+        confirmButtonText: 'Activar',
+        showCancelButton: true,
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            const email = document.getElementById('activar-email').value.trim();
+            const password = document.getElementById('activar-password').value;
+            if (!email || password.length < 8) {
+                Swal.showValidationMessage('Ingresa un correo válido y una contraseña de al menos 8 caracteres.');
+                return false;
             }
+            return {email, password};
         }
     });
+
+    if (!datos) return;
+
+    const {data, error} = await client.auth.signUp(datos);
+    if (error) {
+        Swal.fire('No se pudo activar', error.message, 'error');
+        return;
+    }
+
+    if (data.session) {
+        const perfil = await obtenerPerfilActual();
+        if (perfil) {
+            await Swal.fire('Cuenta activada', 'Tu acceso quedó habilitado correctamente.', 'success');
+            redirigirSegunRol(perfil);
+            return;
+        }
+    }
+
+    Swal.fire('Revisa tu correo', 'Confirma el mensaje de Supabase y luego inicia sesión.', 'success');
 }
 
 // Función para listar usuarios en el Panel Administrativo
@@ -115,7 +174,7 @@ async function listarUsuarios() {
 
     const {data, error} = await client
         .from('personas')
-        .select('id, nombre, apellido, cedula, email, celular, direccion, cargo, roles(nombre_rol), password, activo, jefe_id')
+        .select('id, nombre, apellido, cedula, email, celular, direccion, cargo, remuneracion, roles(nombre), activo, jefe_id, auth_user_id')
         .order('nombre', {ascending: true});
 
     const tbody = document.getElementById('cuerpo-tabla');
@@ -136,7 +195,7 @@ async function listarUsuarios() {
                      <td>${telefono}</td>
                      <td>${direccion}</td>
                      <td>${u.cargo || 'N/A'}</td>
-                     <td><span class="badge ${u.roles?.nombre_rol.toLowerCase()}">${u.roles?.nombre_rol}</span></td>
+                     <td><span class="badge ${u.roles?.nombre.toLowerCase()}">${u.roles?.nombre}</span></td>
                      <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
                      <td>
                         <div class="action-buttons">
@@ -162,7 +221,6 @@ async function crearPersona() {
     const apellido = document.getElementById('new-lastname')?.value;
     const cedula = document.getElementById('new-cedula')?.value;
     const email = document.getElementById('new-email')?.value;
-    const password = document.getElementById('new-password')?.value;
     const celular = document.getElementById('new-phone')?.value;      // ← campo teléfono
     const direccion = document.getElementById('new-address')?.value; // ← campo dirección
     const cargo = document.getElementById('new-cargo')?.value;
@@ -171,7 +229,7 @@ async function crearPersona() {
     const valorJefe = document.getElementById('new-jefe')?.value;
 
     // Validar campos obligatorios
-    if (!nombre || !apellido || !cedula || !email || !password || !rol_id) {
+    if (!nombre || !apellido || !cedula || !email || !rol_id) {
         Swal.fire('Campos Incompletos', 'Por favor, llene todos los campos marcados con (*)', 'warning');
         return;
     }
@@ -181,7 +239,6 @@ async function crearPersona() {
         apellido: apellido,
         cedula: cedula,
         email: email,
-        password: password,
         celular: celular,
         direccion: direccion,
         cargo: cargo,
@@ -203,7 +260,7 @@ async function crearPersona() {
         await Swal.fire({
             icon: 'success',
             title: '¡Empleado Registrado!',
-            text: 'El nuevo integrante ha sido añadido.',
+            text: 'El perfil fue creado. La persona debe usar “Activar cuenta” con este correo.',
             timer: 2000
         });
         listarUsuarios();
@@ -343,7 +400,6 @@ async function registrarMarcacion(tipo) {
         Swal.fire('Error', 'No se pudo registrar: ' + error.message, 'error');
     } else {
         Swal.fire('Éxito', `${tipo} registrada correctamente`, 'success');
-        await registrarAuditoria('asistencias', 'INSERT', {tipo: tipo});
         listarAsistenciasEmpleado(); // Refresca la tabla
     }
 }
@@ -452,7 +508,6 @@ async function enviarSolicitud() {
         Swal.fire('Error de BD', error.message, 'error');
     } else {
         Swal.fire('Éxito', 'Solicitud enviada correctamente', 'success');
-        await registrarAuditoria('permisos', 'INSERT', {fecha: f, horas: formatoIntervalo});
         cerrarModal();
         cargarMisPermisos();
     }
@@ -520,7 +575,6 @@ async function inactivarUsuario(id) {
         if (error) {
             Swal.fire('Error', 'No se pudo inactivar: ' + error.message, 'error');
         } else {
-            await registrarAuditoria('personas', 'UPDATE', {id_afectado: id, estado_nuevo: 'Inactivo'});
             await Swal.fire('Usuario Inactivado', 'El registro ahora es histórico.', 'success');
             listarUsuarios();
         }
@@ -529,40 +583,7 @@ async function inactivarUsuario(id) {
 
 // --- FUNCIONES DEL DASHBOARD ADMINISTRADOR ---
 
-// 1. Abrir el modal de creación
-async function abrirModalEditar(usuario) {
-    await cargarModal('modal_crear_empleado');
-    await cargarListaJefes();
-
-    document.querySelector('.modal-header h3').innerText = "Editar Empleado";
-    const btnGuardar = document.querySelector('.modal-footer .btn-primary');
-    btnGuardar.innerText = "💾 Actualizar Datos";
-    btnGuardar.onclick = () => actualizarPersona(usuario.id);
-
-    // Rellenar todos los campos
-    document.getElementById('new-name').value = usuario.nombre;
-    document.getElementById('new-lastname').value = usuario.apellido;
-    document.getElementById('new-cedula').value = usuario.cedula;
-    document.getElementById('new-email').value = usuario.email;
-    document.getElementById('new-password').value = usuario.password;
-    document.getElementById('new-cargo').value = usuario.cargo || '';
-    document.getElementById('new-phone').value = usuario.celular || '';
-    document.getElementById('new-address').value = usuario.direccion || '';
-    
-    if (document.getElementById('new-salary')) {
-        document.getElementById('new-salary').value = usuario.remuneracion || 0;
-    }
-    const rolSelect = document.getElementById('new-role');
-    if (rolSelect && usuario.roles) {
-        rolSelect.value = (usuario.roles.nombre_rol === 'Administrador') ? 1 : (usuario.roles.nombre_rol === 'Empleado' ? 2 : 3);
-    }
-    const selectJefe = document.getElementById('new-jefe');
-    if (selectJefe) {
-        selectJefe.value = usuario.jefe_id ? usuario.jefe_id : "";
-    }
-}
-
-// 2. Buscador en Tiempo Real (Filtro de tabla)
+// Buscador en tiempo real
 function filtrarUsuarios() {
     const input = document.getElementById('buscador-usuarios');
     const filter = input.value.toLowerCase();
@@ -588,7 +609,9 @@ function filtrarUsuarios() {
     }
 }
 
-function cerrarSesion() {
+async function cerrarSesion() {
+    const client = getSupabase();
+    if (client) await client.auth.signOut();
     sessionStorage.clear();
     Swal.fire({
         icon: 'info',
@@ -599,12 +622,6 @@ function cerrarSesion() {
     }).then(() => {
         window.location.href = 'index.html';
     });
-}
-
-function logout() {
-    sessionStorage.clear();
-    window.location.href = 'index.html';
-    cerrarSesion();
 }
 
 document.addEventListener('click', function (e) {
@@ -648,9 +665,11 @@ async function abrirModalEditar(usuario) {
     document.getElementById('new-lastname').value = usuario.apellido;
     document.getElementById('new-cedula').value = usuario.cedula;
     document.getElementById('new-email').value = usuario.email;
-    document.getElementById('new-password').value = usuario.password;
     document.getElementById('new-cargo').value = usuario.cargo || '';
-    document.getElementById('new-role').value = (usuario.roles.nombre_rol === 'Administrador') ? 1 : (usuario.roles.nombre_rol === 'Empleado' ? 2 : 3);
+    document.getElementById('new-phone').value = usuario.celular || '';
+    document.getElementById('new-address').value = usuario.direccion || '';
+    document.getElementById('new-salary').value = usuario.remuneracion || 0;
+    document.getElementById('new-role').value = (usuario.roles.nombre === 'Administrador') ? 1 : (usuario.roles.nombre === 'Empleado' ? 2 : 3);
 
     // NUEVO: Dejar seleccionado a su jefe actual
     if (usuario.jefe_id) {
@@ -669,7 +688,6 @@ async function actualizarPersona(id) {
         apellido: document.getElementById('new-lastname')?.value,
         cedula: document.getElementById('new-cedula')?.value,
         email: document.getElementById('new-email')?.value,
-        password: document.getElementById('new-password')?.value,
         celular: document.getElementById('new-phone')?.value,      // ← añadido
         direccion: document.getElementById('new-address')?.value, // ← añadido
         cargo: document.getElementById('new-cargo')?.value,
@@ -679,7 +697,7 @@ async function actualizarPersona(id) {
     };
 
     // Validar campos obligatorios
-    if (!datos.nombre || !datos.apellido || !datos.cedula || !datos.email || !datos.password || !datos.rol_id) {
+    if (!datos.nombre || !datos.apellido || !datos.cedula || !datos.email || !datos.rol_id) {
         Swal.fire('Campos Incompletos', 'Por favor, llene todos los campos marcados con (*)', 'warning');
         return;
     }
@@ -694,7 +712,6 @@ async function actualizarPersona(id) {
         Swal.fire('Error', 'No se pudo actualizar: ' + error.message, 'error');
     } else {
         cerrarModal();
-        await registrarAuditoria('personas', 'UPDATE', datos);
         await Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
         listarUsuarios();
     }
@@ -908,36 +925,6 @@ async function verAuditoria() {
     }
 }
 
-// --- 2. FUNCIÓN PARA GUARDAR LOS LOGS ---
-async function registrarAuditoria(tabla, accion, detalles) {
-    const client = getSupabase();
-    const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-
-    if (!user) return;
-
-    // Hora exacta local
-    const now = new Date();
-    const timestampLocal = now.getFullYear() + '-' +
-        String(now.getMonth() + 1).padStart(2, '0') + '-' +
-        String(now.getDate()).padStart(2, '0') + ' ' +
-        String(now.getHours()).padStart(2, '0') + ':' +
-        String(now.getMinutes()).padStart(2, '0') + ':' +
-        String(now.getSeconds()).padStart(2, '0');
-
-    const {error} = await client.from('auditoria').insert([{
-        usuario_id: user.id,
-        tabla_afectada: tabla,
-        accion: accion,
-        detalles: detalles,
-        fecha_hora: timestampLocal
-    }]);
-
-    // ¡NUEVO!: Si falla al guardar, te lo imprime en la consola (F12)
-    if (error) {
-        console.error("❌ Error al guardar en auditoría:", error.message);
-    }
-}
-
 // --- FUNCIÓN PARA REACTIVAR USUARIOS ---
 async function activarUsuario(id) {
     const confirmacion = await Swal.fire({
@@ -962,8 +949,6 @@ async function activarUsuario(id) {
         if (error) {
             Swal.fire('Error', 'No se pudo activar: ' + error.message, 'error');
         } else {
-            await registrarAuditoria('personas', 'UPDATE', {id_afectado: id, estado_nuevo: 'Activo'});
-
             await Swal.fire('Usuario Activado', 'El usuario ya puede ingresar a la Empresa "X".', 'success');
             listarUsuarios();
         }
@@ -991,7 +976,9 @@ async function cargarListaJefes() {
             });
         }
     }
-    // ==================== GRÁFICO DE HORAS TRABAJADAS (EMPLEADO) ====================
+}
+
+// ==================== GRÁFICO DE HORAS TRABAJADAS (EMPLEADO) ====================
 async function cargarGraficoHoras() {
     const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
     if (!user) return;
@@ -1059,7 +1046,6 @@ async function cargarGraficoHoras() {
             }
         }
     });
-}
 }
 // ==================== RESUMEN DE HORAS POR EMPLEADO (JEFE) ====================
 async function mostrarResumenHoras() {
@@ -1210,3 +1196,4 @@ function exportarCSV(nombreArchivo, tablaId) {
 
     Swal.fire('Exportado', `Archivo ${nombreArchivo}.csv generado`, 'success');
 }
+

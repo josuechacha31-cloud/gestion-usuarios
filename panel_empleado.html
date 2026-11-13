@@ -102,18 +102,17 @@
     document.getElementById('reloj-digital').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-    window.onload = () => {
-        verificarAcceso('Empleado');
-        const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-        if (user) {
-            document.getElementById('emp-name').innerText = `${user.nombre} ${user.apellido}`;
-            document.getElementById('emp-cargo').innerText = user.cargo || 'Colaborador';
+    window.onload = async () => {
+        const user = await verificarAcceso('Empleado');
+        if (!user) return;
 
-            listarAsistenciasEmpleado();
-            cargarMisPermisos(); // ¡Añadimos esta nueva función aquí!
-            cargarGraficoHoras();
-        }
+        document.getElementById('emp-name').innerText = `${user.nombre} ${user.apellido}`;
+        document.getElementById('emp-cargo').innerText = user.cargo || 'Colaborador';
+        listarAsistenciasEmpleado();
+        cargarMisPermisos();
+        cargarGraficoHoras();
     };
 </script>
 </body>
 </html>
+

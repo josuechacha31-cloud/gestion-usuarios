@@ -86,15 +86,15 @@
 
 <script src="app.js"></script>
 <script>
-    window.onload = () => {
-        verificarAcceso('Jefe');
-        const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-        if (user) {
-            document.getElementById('jefe-name').innerText = `${user.nombre} ${user.apellido}`;
-            cargarPermisosJefe();
-            cargarAsistenciasEquipo();
-        }
+    window.onload = async () => {
+        const user = await verificarAcceso('Jefe');
+        if (!user) return;
+
+        document.getElementById('jefe-name').innerText = `${user.nombre} ${user.apellido}`;
+        cargarPermisosJefe();
+        cargarAsistenciasEquipo();
     };
 </script>
 </body>
 </html>
+

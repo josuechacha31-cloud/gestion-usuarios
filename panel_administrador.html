@@ -67,12 +67,13 @@
 
 <script src="app.js"></script>
 <script>
-    window.onload = function () {
-        verificarAcceso('Administrador');
-        const user = JSON.parse(sessionStorage.getItem('usuario_logueado'));
-        if (user) document.getElementById('admin-name').innerText = `${user.nombre} ${user.apellido}`;
+    window.onload = async function () {
+        const user = await verificarAcceso('Administrador');
+        if (!user) return;
+        document.getElementById('admin-name').innerText = `${user.nombre} ${user.apellido}`;
         listarUsuarios();
     };
 </script>
 </body>
 </html>
+
